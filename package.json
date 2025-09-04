@@ -1,0 +1,55 @@
+{
+  "name": "zapmail-mcp-server",
+  "version": "2.0.0",
+  "description": "A comprehensive Model Context Protocol (MCP) server for the Zapmail API, providing natural language access to all Zapmail features including domain management, mailbox operations, exports, and more.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "zapmail-mcp": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "ZAPMAIL_LOG_LEVEL=DEBUG node index.js",
+    "test": "echo 'Run health check: echo \\'{\\\"jsonrpc\\\": \\\"2.0\\\", \\\"id\\\": 1, \\\"method\\\": \\\"tools/invoke\\\", \\\"params\\\": {\\\"tool_name\\\": \\\"health_check\\\", \\\"input\\\": {}}}\\' | node index.js'",
+    "health": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/invoke\", \"params\": {\"tool_name\": \"health_check\", \"input\": {\"detailed\": true}}}' | node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "zapmail",
+    "model-context-protocol",
+    "agent",
+    "planner",
+    "domains",
+    "mailboxes",
+    "email-automation",
+    "cold-email",
+    "api",
+    "natural-language",
+    "automation"
+  ],
+  "author": "Zapmail Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/zapmail-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/zapmail-mcp-server/issues"
+  },
+  "homepage": "https://github.com/your-username/zapmail-mcp-server#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "files": [
+    "index.js",
+    "README.md",
+    "STEP_BY_STEP_GUIDE.md",
+    "QUICK_REFERENCE.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "env.example",
+    "LICENSE"
+  ]
+}
