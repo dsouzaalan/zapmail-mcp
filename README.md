@@ -344,6 +344,9 @@ npx zapmail-mcp --version
 
 # If npx fails, try with explicit package version
 npx zapmail-mcp@latest --version
+
+# Get help information
+npx zapmail-mcp --help
 ```
 
 **For global installation:**
@@ -514,9 +517,30 @@ Once connected, you can:
 ## Package Information
 
 - **Package Name**: `zapmail-mcp`
+- **Version**: 0.0.2
 - **NPM**: [zapmail-mcp](https://www.npmjs.com/package/zapmail-mcp)
 - **GitHub**: [dsouzaalan/zapmail-mcp](https://github.com/dsouzaalan/zapmail-mcp)
 - **License**: MIT
+
+## Command Line Options
+
+The MCP server supports the following command-line options:
+
+### Version Information
+
+```bash
+npx zapmail-mcp --version
+# or
+npx zapmail-mcp -v
+```
+
+### Help Information
+
+```bash
+npx zapmail-mcp --help
+# or
+npx zapmail-mcp -h
+```
 
 ## Support
 
