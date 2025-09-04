@@ -1,78 +1,145 @@
 # Zapmail MCP Server
 
-A Model Context Protocol (MCP) server for the Zapmail API that provides natural language access to domain management, mailbox operations, and exports.
+A Model Context Protocol (MCP) server for the Zapmail API that provides natural language access to domain management, mailbox operations, and exports. This package enables AI assistants like Claude to interact with Zapmail through natural language commands.
 
 ## Features
 
-- Complete Zapmail API coverage
+- Complete Zapmail API coverage (46+ tools)
 - Natural language command processing
 - Dynamic tool generation from API documentation
 - Export support for Reachinbox, Instantly, Smartlead, Reply.io, and CSV
 - Caching system with TTL
 - Rate limiting and error handling
 - Multi-workspace support
+- MCP integration with Claude Desktop and Cursor
 
 ## Prerequisites
 
 - Node.js 18+
 - Zapmail API key
+- MCP-compatible client (Claude Desktop, Cursor, etc.)
 - Optional: OpenAI API key for enhanced natural language processing
 
 ## Installation
 
-1. Clone the repository:
+### Option 1: Using npx (Recommended)
+
+No installation required - run directly with npx:
+
 ```bash
-git clone <repository-url>
-cd zapmail-mcp-nl
+npx zapmail-mcp
 ```
 
-2. Install dependencies:
+### Option 2: Global Installation
+
+Install globally for persistent access:
+
 ```bash
-npm install
+npm install -g zapmail-mcp
 ```
 
-3. Configure environment variables:
-```bash
-# Required
-export ZAPMAIL_API_KEY="your-zapmail-api-key"
+## MCP Configuration
 
-# Optional
-export ZAPMAIL_WORKSPACE_KEY="your-workspace-id"
-export ZAPMAIL_SERVICE_PROVIDER="GOOGLE"  # or "MICROSOFT"
-export ZAPMAIL_LOG_LEVEL="INFO"
-export ZAPMAIL_ENABLE_METRICS="true"
-export ZAPMAIL_ENABLE_CACHE="true"
-export OPENAI_API_KEY="your-openai-api-key"
+### For Claude Desktop
+
+Create or update `claude_desktop_config.json`:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+**Using npx (Recommended):**
+
+```json
+{
+  "mcpServers": {
+    "zapmail": {
+      "command": "npx",
+      "args": ["zapmail-mcp"],
+      "env": {
+        "ZAPMAIL_API_KEY": "your-zapmail-api-key"
+      }
+    }
+  }
+}
+```
+
+**Using global installation:**
+
+```json
+{
+  "mcpServers": {
+    "zapmail": {
+      "command": "zapmail-mcp",
+      "args": [],
+      "env": {
+        "ZAPMAIL_API_KEY": "your-zapmail-api-key"
+      }
+    }
+  }
+}
+```
+
+### For Cursor
+
+Add to your Cursor MCP settings:
+
+**Using npx (Recommended):**
+
+```json
+{
+  "mcpServers": {
+    "zapmail": {
+      "command": "npx",
+      "args": ["zapmail-mcp"],
+      "env": {
+        "ZAPMAIL_API_KEY": "your-zapmail-api-key"
+      }
+    }
+  }
+}
+```
+
+**Using global installation:**
+
+```json
+{
+  "mcpServers": {
+    "zapmail": {
+      "command": "zapmail-mcp",
+      "args": [],
+      "env": {
+        "ZAPMAIL_API_KEY": "your-zapmail-api-key"
+      }
+    }
+  }
+}
 ```
 
 ## Quick Start
 
-1. Start the MCP server:
-```bash
-node index.js
-```
+1. **Get your Zapmail API key:**
 
-2. Test basic functionality:
-```bash
-# Test server health
-curl -X POST http://localhost:3000/health
+   - Sign up at [Zapmail](https://zapmail.ai)
+   - Navigate to your API settings
+   - Generate a new API key
 
-# List available tools
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}' | node index.js
-```
+2. **Configure your MCP client:**
 
-3. Basic usage examples:
-```bash
-# List workspaces
-echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/invoke", "params": {"tool_name": "list_workspaces", "input": {}}}' | node index.js
+   - Choose your preferred MCP client (Claude Desktop or Cursor)
+   - Add the configuration JSON above to your MCP settings
+   - Replace `your-zapmail-api-key` with your actual API key
 
-# Natural language commands
-echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/invoke", "params": {"tool_name": "plan_and_execute", "input": {"instruction": "list all workspaces", "execute": false}}}' | node index.js
-```
+3. **Test the connection:**
+   - Open your MCP client
+   - Try natural language commands like:
+     - "List all my Zapmail workspaces"
+     - "Show me my domains"
+     - "Check if example.com is available for purchase"
 
 ## Available Tools
 
 ### Core Management Tools
+
 - `set_context` - Set workspace and provider context
 - `wallet_balance` - Get wallet balance
 - `list_workspaces` - List all workspaces
@@ -90,21 +157,25 @@ echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/invoke", "params": {"tool_nam
 - `get_server_info` - Get server information
 
 ### System Management Tools
+
 - `get_metrics` - Get system metrics and performance data
 - `clear_cache` - Clear system cache
 - `health_check` - System health check
 
 ### Advanced Mailbox Tools
+
 - `bulk_update_mailboxes` - Bulk update mailboxes
 - `search_mailboxes` - Search mailboxes with advanced filters
 
 ### Export System Tools
+
 - `get_export_info` - Get export system information
 - `get_export_scenario` - Get export scenario instructions
 - `validate_export_request` - Validate export request parameters
 - `export_guidance` - Get export guidance and best practices
 
 ### API Documentation Tools
+
 - `get_api_info` - Get comprehensive API endpoint information
 - `search_api_endpoints` - Search API endpoints by keyword
 - `get_api_scenarios` - Get common API usage scenarios
@@ -112,163 +183,350 @@ echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/invoke", "params": {"tool_nam
 - `generate_api_examples` - Generate API usage examples
 
 ### Dynamic API Tools
+
 All documented API endpoints with automatic tool generation
 
 ## Natural Language Commands
 
-The server understands natural language instructions:
+Once connected to your MCP client, you can use natural language to control Zapmail:
 
 ### Workspace & Domain Management
-```
-"List all my workspaces"
-"Show domains in current workspace containing 'lead'"
-"Check if leadconnectlab.com is available for 2 years"
-"Buy leadconnectlab.com and outreachprohub.com for 1 year using wallet if possible"
-```
+
+- "List all my workspaces"
+- "Show domains in current workspace containing 'lead'"
+- "Check if leadconnectlab.com is available for 2 years"
+- "Buy leadconnectlab.com and outreachprohub.com for 1 year using wallet if possible"
 
 ### Mailbox Management
-```
-"Create 3 mailboxes per domain where there are zero mailboxes"
-"Setup 100 mailboxes and connect to Instantly.ai for me"
-```
+
+- "Create 3 mailboxes per domain where there are zero mailboxes"
+- "Setup 100 mailboxes and connect to Instantly.ai for me"
+- "Update all mailboxes with new names"
 
 ### Export Operations
-```
-"Export all mailboxes to reachinbox"
-"Export mailboxes to instantly"
-"Export mailboxes as CSV"
-"Export specific mailboxes"
-"Export mailboxes from leadconnectio.com domain"
-```
+
+- "Export all mailboxes to reachinbox"
+- "Export mailboxes to instantly"
+- "Export mailboxes as CSV"
+- "Export specific mailboxes"
+- "Export mailboxes from leadconnectio.com domain"
 
 ### Third-Party Integration
-```
-"Connect reachinbox account"
-"Add instantly credentials"
-"Link smartlead account"
-"Setup reply.io integration"
-```
+
+- "Connect reachinbox account"
+- "Add instantly credentials"
+- "Link smartlead account"
+- "Setup reply.io integration"
 
 ## Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `ZAPMAIL_API_KEY` | Your Zapmail API key | - | Yes |
-| `ZAPMAIL_WORKSPACE_KEY` | Default workspace ID | - | No |
-| `ZAPMAIL_SERVICE_PROVIDER` | Email provider (GOOGLE/MICROSOFT) | GOOGLE | No |
-| `ZAPMAIL_LOG_LEVEL` | Logging level (DEBUG/INFO/WARN/ERROR) | INFO | No |
-| `ZAPMAIL_MAX_RETRIES` | Maximum retry attempts | 3 | No |
-| `ZAPMAIL_TIMEOUT_MS` | Request timeout in milliseconds | 30000 | No |
-| `ZAPMAIL_ENABLE_CACHE` | Enable response caching | true | No |
-| `ZAPMAIL_ENABLE_METRICS` | Enable performance metrics | true | No |
-| `ZAPMAIL_RATE_LIMIT_DELAY` | Rate limiting delay in ms | 1000 | No |
-| `OPENAI_API_KEY` | OpenAI API key for enhanced NLP | - | No |
+| Variable                   | Description                           | Default | Required |
+| -------------------------- | ------------------------------------- | ------- | -------- |
+| `ZAPMAIL_API_KEY`          | Your Zapmail API key                  | -       | Yes      |
+| `ZAPMAIL_WORKSPACE_KEY`    | Default workspace ID                  | -       | No       |
+| `ZAPMAIL_SERVICE_PROVIDER` | Email provider (GOOGLE/MICROSOFT)     | GOOGLE  | No       |
+| `ZAPMAIL_LOG_LEVEL`        | Logging level (DEBUG/INFO/WARN/ERROR) | INFO    | No       |
+| `ZAPMAIL_MAX_RETRIES`      | Maximum retry attempts                | 3       | No       |
+| `ZAPMAIL_TIMEOUT_MS`       | Request timeout in milliseconds       | 30000   | No       |
+| `ZAPMAIL_ENABLE_CACHE`     | Enable response caching               | true    | No       |
+| `ZAPMAIL_ENABLE_METRICS`   | Enable performance metrics            | true    | No       |
+| `ZAPMAIL_RATE_LIMIT_DELAY` | Rate limiting delay in ms             | 1000    | No       |
+| `OPENAI_API_KEY`           | OpenAI API key for enhanced NLP       | -       | No       |
 
 ## Usage Examples
 
 ### Domain Operations
 
 #### Check Domain Availability
-```bash
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/invoke", "params": {"tool_name": "check_domain_availability", "input": {"domainName": "example.com", "years": 1}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Check if example.com is available for 1 year"
 ```
 
 #### Purchase Domains
-```bash
-echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/invoke", "params": {"tool_name": "purchase_domains", "input": {"domains": ["example.com", "test.com"], "years": 1, "preferWallet": true}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Buy example.com and test.com for 1 year using wallet if possible"
 ```
 
 ### Mailbox Management
 
 #### Create Mailboxes on Empty Domains
-```bash
-echo '{"jsonrpc": "2.0", "id": 3, "method": "tools/invoke", "params": {"tool_name": "create_mailboxes_for_zero_domains", "input": {"countPerDomain": 5}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Create 5 mailboxes on domains that have zero mailboxes"
 ```
 
 #### Bulk Update Mailboxes
-```bash
-echo '{"jsonrpc": "2.0", "id": 4, "method": "tools/invoke", "params": {"tool_name": "bulk_update_mailboxes", "input": {"updates": [{"mailboxId": "mb_123", "firstName": "John", "lastName": "Doe"}]}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Update all mailboxes with new names and details"
 ```
 
 ### Export Operations
 
 #### Export to Reachinbox
-```bash
-echo '{"jsonrpc": "2.0", "id": 5, "method": "tools/invoke", "params": {"tool_name": "add_third_party_account", "input": {"email": "user@reachinbox.com", "password": "password", "app": "REACHINBOX"}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Connect my Reachinbox account and export all mailboxes"
 ```
 
 #### Get Export Guidance
-```bash
-echo '{"jsonrpc": "2.0", "id": 6, "method": "tools/invoke", "params": {"tool_name": "export_guidance", "input": {"goal": "Export all active mailboxes to Reachinbox", "platform": "REACHINBOX", "mailboxes": 100}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Help me export 100 mailboxes to Reachinbox"
 ```
 
-### Natural Language Processing
+### Complex Workflows
 
-#### Complex Workflow
-```bash
-echo '{"jsonrpc": "2.0", "id": 7, "method": "tools/invoke", "params": {"tool_name": "plan_and_execute", "input": {"instruction": "Buy example.com and test.com, create 5 mailboxes on each, and export to reachinbox", "execute": false}}}' | node index.js
+#### Multi-Step Operations
+
+**In Claude Desktop or Cursor:**
+
+```
+"Buy example.com and test.com, create 5 mailboxes on each, and export to reachinbox"
+```
+
+#### Workspace Management
+
+**In Claude Desktop or Cursor:**
+
+```
+"Show me all my workspaces and switch to the one with the most domains"
 ```
 
 ### System Monitoring
 
 #### Health Check
-```bash
-echo '{"jsonrpc": "2.0", "id": 8, "method": "tools/invoke", "params": {"tool_name": "health_check", "input": {"detailed": true}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Check the health of my Zapmail connection"
 ```
 
 #### Get Metrics
-```bash
-echo '{"jsonrpc": "2.0", "id": 9, "method": "tools/invoke", "params": {"tool_name": "get_metrics", "input": {"includeCache": true, "includeTimers": true, "includeCounters": true}}}' | node index.js
+
+**In Claude Desktop or Cursor:**
+
+```
+"Show me performance metrics for my Zapmail operations"
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### MCP Connection Issues
 
-#### API Key Issues
+#### 1. MCP Server Not Found
+
+**Problem**: "zapmail-mcp command not found" or "npx zapmail-mcp not found"
+**Solutions**:
+
+**For npx usage:**
+
+```bash
+# Test npx directly
+npx zapmail-mcp --version
+
+# If npx fails, try with explicit package version
+npx zapmail-mcp@latest --version
+```
+
+**For global installation:**
+
+```bash
+# Install the package globally
+npm install -g zapmail-mcp
+
+# Verify installation
+zapmail-mcp --version
+```
+
+#### 2. MCP Client Not Detecting Server
+
+**Problem**: Zapmail tools not appearing in Claude Desktop/Cursor
+**Solutions**:
+
+- Restart your MCP client (Claude Desktop/Cursor)
+- Check your MCP configuration file syntax
+- Verify the command path in your config
+
+#### 3. API Key Issues
+
 **Problem**: "ZAPMAIL_API_KEY not configured"
-**Solution**: Set your API key:
+**Solutions**:
+
+- Set environment variable in your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "zapmail": {
+      "command": "npx",
+      "args": ["zapmail-mcp"],
+      "env": {
+        "ZAPMAIL_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+- Or set globally:
+
 ```bash
 export ZAPMAIL_API_KEY="your-api-key"
 ```
 
-#### Workspace Context Issues
+#### 4. Workspace Context Issues
+
 **Problem**: Getting data from wrong workspace
-**Solution**: Set workspace context:
-```bash
-export ZAPMAIL_WORKSPACE_KEY="your-workspace-id"
+**Solution**: Set workspace in MCP config:
+
+```json
+{
+  "env": {
+    "ZAPMAIL_WORKSPACE_KEY": "your-workspace-id"
+  }
+}
 ```
 
-#### Rate Limiting
-**Problem**: Too many requests
-**Solution**: Increase rate limit delay:
-```bash
-export ZAPMAIL_RATE_LIMIT_DELAY="2000"  # 2 seconds
-```
+### Performance Issues
 
-#### Cache Issues
-**Problem**: Stale data
-**Solution**: Clear cache:
-```bash
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/invoke", "params": {"tool_name": "clear_cache", "input": {"confirm": true}}}' | node index.js
+#### 1. Slow Response Times
+
+**Problem**: MCP operations taking too long
+**Solutions**:
+
+- Enable caching: `ZAPMAIL_ENABLE_CACHE="true"`
+- Increase rate limit delay: `ZAPMAIL_RATE_LIMIT_DELAY="2000"`
+- Check your internet connection
+
+#### 2. Rate Limiting
+
+**Problem**: "Too many requests" errors
+**Solution**: Increase rate limit delay in MCP config:
+
+```json
+{
+  "env": {
+    "ZAPMAIL_RATE_LIMIT_DELAY": "2000"
+  }
+}
 ```
 
 ### Debug Mode
 
 Enable debug logging for detailed troubleshooting:
-```bash
-export ZAPMAIL_LOG_LEVEL="DEBUG"
-node index.js
+
+```json
+{
+  "env": {
+    "ZAPMAIL_LOG_LEVEL": "DEBUG"
+  }
+}
 ```
 
 ### Health Check
 
-Run a comprehensive health check:
-```bash
-echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/invoke", "params": {"tool_name": "health_check", "input": {"detailed": true}}}' | node index.js
+Test your MCP connection:
+**In Claude Desktop or Cursor:**
+
 ```
+"Check the health of my Zapmail connection"
+```
+
+### Common MCP Configuration Errors
+
+#### 1. Invalid JSON Syntax
+
+**Problem**: MCP client fails to load configuration
+**Solution**: Validate your JSON configuration using a JSON validator
+
+#### 2. Wrong Command Path
+
+**Problem**: "Command not found" in MCP client
+**Solution**: Use full path or ensure `zapmail-mcp` is in your PATH
+
+#### 3. Environment Variables Not Loading
+
+**Problem**: API key not being passed to MCP server
+**Solution**: Use the `env` section in your MCP configuration instead of global environment variables
+
+## Getting Started with MCP
+
+### Step 1: Install the Package
+
+**Option A: Using npx (Recommended)**
+No installation needed - just use npx:
+
+```bash
+npx zapmail-mcp
+```
+
+**Option B: Global Installation**
+
+```bash
+npm install -g zapmail-mcp
+```
+
+### Step 2: Get Your Zapmail API Key
+
+1. Sign up at [Zapmail](https://zapmail.ai)
+2. Navigate to your API settings
+3. Generate a new API key
+4. Note your workspace ID (optional but recommended)
+
+### Step 3: Configure Your MCP Client
+
+Choose your preferred MCP client and follow the configuration steps above.
+
+### Step 4: Test the Connection
+
+Open your MCP client and try a simple command:
+
+- "List my Zapmail workspaces"
+- "Show me my domains"
+
+### Step 5: Explore Advanced Features
+
+Once connected, you can:
+
+- Manage domains and mailboxes through natural language
+- Export to third-party platforms
+- Set up complex automation workflows
+- Monitor performance and health
+
+## Package Information
+
+- **Package Name**: `zapmail-mcp`
+- **NPM**: [zapmail-mcp](https://www.npmjs.com/package/zapmail-mcp)
+- **GitHub**: [dsouzaalan/zapmail-mcp](https://github.com/dsouzaalan/zapmail-mcp)
+- **License**: MIT
+
+## Support
+
+For support and questions:
+
+- Check the troubleshooting section above
+- Review the MCP configuration examples
+- Test your connection with health checks
+- Enable debug logging for detailed error information
+- Visit the [GitHub repository](https://github.com/dsouzaalan/zapmail-mcp) for issues and discussions
 
 ## Contributing
 
@@ -281,3 +539,7 @@ echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/invoke", "params": {"tool_nam
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+**Made with ❤️ for the Zapmail community**
