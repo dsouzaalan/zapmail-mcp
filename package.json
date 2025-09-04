@@ -1,17 +1,20 @@
 {
-  "name": "zapmail-mcp-server",
-  "version": "2.0.0",
+  "name": "zapmail-mcp",
+  "version": "0.0.1",
   "description": "A comprehensive Model Context Protocol (MCP) server for the Zapmail API, providing natural language access to all Zapmail features including domain management, mailbox operations, exports, and more.",
   "type": "module",
-  "main": "index.js",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "bin": {
-    "zapmail-mcp": "index.js"
+    "zapmail-mcp": "src/index.js"
   },
   "scripts": {
-    "start": "node index.js",
-    "dev": "ZAPMAIL_LOG_LEVEL=DEBUG node index.js",
-    "test": "echo 'Run health check: echo \\'{\\\"jsonrpc\\\": \\\"2.0\\\", \\\"id\\\": 1, \\\"method\\\": \\\"tools/invoke\\\", \\\"params\\\": {\\\"tool_name\\\": \\\"health_check\\\", \\\"input\\\": {}}}\\' | node index.js'",
-    "health": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/invoke\", \"params\": {\"tool_name\": \"health_check\", \"input\": {\"detailed\": true}}}' | node index.js"
+    "start": "node src/index.js",
+    "dev": "ZAPMAIL_LOG_LEVEL=DEBUG node src/index.js",
+    "test": "npm run health",
+    "health": "echo '{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/invoke\", \"params\": {\"tool_name\": \"health_check\", \"input\": {\"detailed\": true}}}' | node src/index.js"
   },
   "keywords": [
     "mcp",
@@ -27,23 +30,24 @@
     "natural-language",
     "automation"
   ],
-  "author": "Zapmail Community",
+  "author": "Zapmail Team",
   "license": "MIT",
+  "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/zapmail-mcp-server.git"
+    "url": "https://github.com/dsouzaalan/zapmail-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/zapmail-mcp-server/issues"
+    "url": "https://github.com/dsouzaalan/zapmail-mcp/issues"
   },
-  "homepage": "https://github.com/your-username/zapmail-mcp-server#readme",
+  "homepage": "https://github.com/dsouzaalan/zapmail-mcp#readme",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {},
   "devDependencies": {},
   "files": [
-    "index.js",
+    "src",
     "README.md",
     "STEP_BY_STEP_GUIDE.md",
     "QUICK_REFERENCE.md",
@@ -51,5 +55,8 @@
     "CONTRIBUTING.md",
     "env.example",
     "LICENSE"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
