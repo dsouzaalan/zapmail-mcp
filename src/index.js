@@ -4495,7 +4495,12 @@ function sendError(id, code, message, data) {
 
 async function handleToolsList(id) {
   await ENDPOINTS_PROMISE;
-  const tools = buildToolDefinitions();
+  const toolsRaw = buildToolDefinitions();
+  const tools = toolsRaw.map((t) =>
+    t && t.input_schema && !t.inputSchema
+      ? { ...t, inputSchema: t.input_schema }
+      : t
+  );
   sendResult(id, { tools });
 }
 
@@ -4503,23 +4508,38 @@ async function handleToolsInvoke(id, params) {
   await ENDPOINTS_PROMISE;
   const name = params?.tool_name;
   const input = params?.input || {};
+  const isMcpCall = !!params?.__from_mcp_call;
+  const sendToolResult = (payload) => {
+    if (isMcpCall) {
+      // Return as text content for broad client compatibility
+      let text;
+      try {
+        text = JSON.stringify(payload, null, 2);
+      } catch (_) {
+        text = String(payload);
+      }
+      sendResult(id, { content: [{ type: "text", text }] });
+    } else {
+      sendResult(id, payload);
+    }
+  };
   try {
     if (name === "set_context") {
       if (typeof input.workspaceKey === "string")
         CONTEXT.workspaceKey = input.workspaceKey;
       if (typeof input.serviceProvider === "string")
         CONTEXT.serviceProvider = input.serviceProvider.toUpperCase();
-      sendResult(id, { message: "Context updated", context: CONTEXT });
+      sendToolResult({ message: "Context updated", context: CONTEXT });
       return;
     }
     if (name === "wallet_balance") {
       const balance = await getWalletBalance();
-      sendResult(id, { balance, context: CONTEXT });
+      sendToolResult({ balance, context: CONTEXT });
       return;
     }
     if (name === "list_workspaces") {
       const data = await listWorkspaces();
-      sendResult(id, { workspaces: data });
+      sendToolResult({ workspaces: data });
       return;
     }
     if (name === "list_domains") {
@@ -4528,7 +4548,7 @@ async function handleToolsInvoke(id, params) {
         workspaceKey: input.workspaceKey,
         serviceProvider: input.serviceProvider,
       });
-      sendResult(id, { domains: data });
+      sendToolResult({ domains: data });
       return;
     }
     if (name === "check_domain_availability") {
@@ -4541,7 +4561,7 @@ async function handleToolsInvoke(id, params) {
         input.workspaceKey,
         input.serviceProvider
       );
-      sendResult(id, { domainName: input.domainName, availability: data });
+      sendToolResult({ domainName: input.domainName, availability: data });
       return;
     }
     if (name === "purchase_domains") {
@@ -4556,7 +4576,7 @@ async function handleToolsInvoke(id, params) {
         workspaceKey: input.workspaceKey,
         serviceProvider: input.serviceProvider,
       });
-      sendResult(id, data);
+      sendToolResult(data);
       return;
     }
     if (name === "create_mailboxes_for_zero_domains") {
@@ -4567,7 +4587,7 @@ async function handleToolsInvoke(id, params) {
         workspaceKey: input.workspaceKey,
         serviceProvider: input.serviceProvider,
       });
-      sendResult(id, out);
+      sendToolResult(out);
       return;
     }
     if (name === "add_third_party_account") {
@@ -4588,7 +4608,7 @@ async function handleToolsInvoke(id, params) {
         body: { email, password, app },
         headers,
       });
-      sendResult(id, data);
+      sendToolResult(data);
       return;
     }
     if (name === "call_endpoint") {
@@ -4620,7 +4640,7 @@ async function handleToolsInvoke(id, params) {
         body,
         headers,
       });
-      sendResult(id, data);
+      sendToolResult(data);
       return;
     }
     if (name === "generate_usernames") {
@@ -4634,7 +4654,7 @@ async function handleToolsInvoke(id, params) {
         name: personName,
         numberOfNames: count,
       });
-      sendResult(id, result);
+          sendToolResult(result);
       return;
     }
     if (name === "generate_name_pairs") {
@@ -4650,7 +4670,7 @@ async function handleToolsInvoke(id, params) {
         ethnicity: ethnicity,
         gender: g,
       });
-      sendResult(id, result);
+      sendToolResult(result);
       return;
     }
     if (name === "generate_domains") {
@@ -4704,7 +4724,7 @@ async function handleToolsInvoke(id, params) {
           if (out.length >= desiredCount) break;
         }
       }
-      sendResult(id, { domains: out.slice(0, desiredCount) });
+      sendToolResult({ domains: out.slice(0, desiredCount) });
       return;
     }
     if (name === "check_domain_availability_batch") {
@@ -4717,7 +4737,7 @@ async function handleToolsInvoke(id, params) {
         input.workspaceKey,
         input.serviceProvider
       );
-      sendResult(id, { results });
+      sendToolResult({ results });
       return;
     }
     if (name === "plan_and_execute") {
@@ -4737,7 +4757,7 @@ async function handleToolsInvoke(id, params) {
         }
       }
       if (!execute) {
-        sendResult(id, {
+        sendToolResult({
           mode: "dry-run",
           strategy: plan.strategy,
           steps: plan.steps,
@@ -4785,7 +4805,7 @@ async function handleToolsInvoke(id, params) {
           results.push({ step, ok: true });
         }
       }
-      sendResult(id, {
+      sendToolResult({
         mode: "execute",
         strategy: plan.strategy,
         steps: plan.steps,
@@ -4825,7 +4845,7 @@ async function handleToolsInvoke(id, params) {
         result.timers = metrics.getStats().timers;
       }
 
-      sendResult(id, result);
+      sendToolResult(result);
       return;
     }
 
@@ -4843,9 +4863,9 @@ async function handleToolsInvoke(id, params) {
       if (cache) {
         cache.clear();
         logger.info("Cache cleared", { requestId: id });
-        sendResult(id, { message: "Cache cleared successfully", cacheSize: 0 });
+        sendToolResult({ message: "Cache cleared successfully", cacheSize: 0 });
       } else {
-        sendResult(id, { message: "Cache is not enabled", cacheSize: 0 });
+        sendToolResult({ message: "Cache is not enabled", cacheSize: 0 });
       }
       return;
     }
@@ -4914,7 +4934,7 @@ async function handleToolsInvoke(id, params) {
         health.checks.metrics = { enabled: false };
       }
 
-      sendResult(id, health);
+      sendToolResult(health);
       return;
     }
 
@@ -4993,7 +5013,7 @@ async function handleToolsInvoke(id, params) {
         }
       }
 
-      sendResult(id, {
+      sendToolResult({
         total: updates.length,
         successful: results.length,
         failed: errors.length,
@@ -5025,7 +5045,7 @@ async function handleToolsInvoke(id, params) {
       const allMailboxes = await apiFetch("/v2/mailboxes/list", { headers });
 
       if (!allMailboxes.data || !allMailboxes.data.domains) {
-        sendResult(id, { mailboxes: [], total: 0 });
+        sendToolResult({ mailboxes: [], total: 0 });
         return;
       }
 
@@ -5077,7 +5097,7 @@ async function handleToolsInvoke(id, params) {
         }
       }
 
-      sendResult(id, {
+      sendToolResult({
         mailboxes: filteredMailboxes,
         total: filteredMailboxes.length,
         filters: { firstName, lastName, username, domain, status },
@@ -5139,7 +5159,7 @@ async function handleToolsInvoke(id, params) {
           : "not_set";
       }
 
-      sendResult(id, info);
+      sendToolResult(info);
       return;
     }
 
@@ -5173,7 +5193,7 @@ async function handleToolsInvoke(id, params) {
         }
       }
 
-      sendResult(id, result);
+      sendToolResult(result);
       return;
     }
 
@@ -5185,7 +5205,7 @@ async function handleToolsInvoke(id, params) {
           scenario,
           customParams
         );
-        sendResult(id, instructions);
+          sendToolResult(instructions);
       } catch (error) {
         sendError(id, -32000, error.message);
       }
@@ -5224,9 +5244,9 @@ async function handleToolsInvoke(id, params) {
           );
         }
 
-        sendResult(id, result);
+        sendToolResult(result);
       } catch (error) {
-        sendResult(id, {
+        sendToolResult({
           valid: false,
           error: error.message,
           details: error.details || {},
@@ -5304,7 +5324,7 @@ async function handleToolsInvoke(id, params) {
       // General best practices
       guidance.recommendations.push(...EXPORT_SYSTEM.bestPractices.slice(0, 3));
 
-      sendResult(id, guidance);
+      sendToolResult(guidance);
       return;
     }
 
@@ -5327,7 +5347,7 @@ async function handleToolsInvoke(id, params) {
               examples: API_GUIDANCE.generateExamples(category, endpoint),
             }),
           };
-          sendResult(id, result);
+          sendToolResult(result);
         } else {
           // Get all endpoints in category
           const categoryInfo = API_GUIDANCE.getCategoryEndpoints(category);
@@ -5337,7 +5357,7 @@ async function handleToolsInvoke(id, params) {
               scenarios: API_GUIDANCE.getCategoryScenarios(category),
             }),
           };
-          sendResult(id, result);
+          sendToolResult(result);
         }
       } catch (error) {
         sendError(id, -32000, error.message);
@@ -5356,7 +5376,7 @@ async function handleToolsInvoke(id, params) {
           results = results.filter((result) => result.category === category);
         }
 
-        sendResult(id, {
+        sendToolResult({
           keyword,
           category: category || "all",
           results,
@@ -5384,11 +5404,11 @@ async function handleToolsInvoke(id, params) {
             );
             return;
           }
-          sendResult(id, scenarioInfo);
+          sendToolResult(scenarioInfo);
         } else {
           // Get all scenarios in category
           const scenarios = API_GUIDANCE.getCategoryScenarios(category);
-          sendResult(id, {
+          sendToolResult({
             category: API_ENDPOINT_SYSTEM[category].name,
             scenarios,
           });
@@ -5406,11 +5426,11 @@ async function handleToolsInvoke(id, params) {
         if (endpoint) {
           // Get best practices for specific endpoint
           const endpointInfo = API_GUIDANCE.getEndpointInfo(category, endpoint);
-          sendResult(id, {
-            category: endpointInfo.category,
-            endpoint: endpoint,
-            bestPractices: endpointInfo.bestPractices || [],
-          });
+        sendToolResult({
+          category: endpointInfo.category,
+          endpoint: endpoint,
+          bestPractices: endpointInfo.bestPractices || [],
+        });
         } else {
           // Get all best practices for category
           const categoryData = API_ENDPOINT_SYSTEM[category];
@@ -5422,10 +5442,10 @@ async function handleToolsInvoke(id, params) {
             }
           }
 
-          sendResult(id, {
-            category: categoryData.name,
-            bestPractices: [...new Set(practices)], // Remove duplicates
-          });
+        sendToolResult({
+          category: categoryData.name,
+          bestPractices: [...new Set(practices)], // Remove duplicates
+        });
         }
       } catch (error) {
         sendError(id, -32000, error.message);
@@ -5442,7 +5462,7 @@ async function handleToolsInvoke(id, params) {
           endpoint,
           customParams
         );
-        sendResult(id, {
+        sendToolResult({
           category: API_ENDPOINT_SYSTEM[category].name,
           endpoint,
           examples,
@@ -5480,7 +5500,7 @@ async function handleToolsInvoke(id, params) {
         body,
         headers,
       });
-      sendResult(id, data);
+      sendToolResult(data);
       return;
     }
     sendError(
@@ -5493,10 +5513,8 @@ async function handleToolsInvoke(id, params) {
   }
 }
 
-async function handleResourcesGet(id, params) {
-  await ENDPOINTS_PROMISE;
-  const uri = params?.uri;
-  const resources = {
+function getResourcesMap() {
+  return {
     "resource://zapmail/llms": ENDPOINTS.map((e) => e.slug).join("\n"),
     "resource://zapmail/prompts/name_generation": NAME_GENERATION_PROMPT,
     "resource://zapmail/prompts/pair_generation": PAIR_GENERATION_PROMPT,
@@ -5505,11 +5523,33 @@ async function handleResourcesGet(id, params) {
     "resource://zapmail/prompts/domain_generation": DOMAIN_GENERATION_PROMPT,
     "resource://zapmail/examples/nl": EXAMPLES_NL,
   };
+}
+
+async function handleResourcesGet(id, params) {
+  await ENDPOINTS_PROMISE;
+  const uri = params?.uri;
+  const resources = getResourcesMap();
   if (uri in resources) {
     sendResult(id, { uri, mimeType: "text/plain", text: resources[uri] });
   } else {
     sendError(id, -32601, `Unknown resource '${uri}'.`);
   }
+}
+
+async function handleResourcesList(id) {
+  await ENDPOINTS_PROMISE;
+  const resources = getResourcesMap();
+  const list = Object.keys(resources).map((uri) => ({
+    uri,
+    name: uri.replace("resource://", ""),
+    mimeType: "text/plain",
+  }));
+  sendResult(id, { resources: list });
+}
+
+function handlePromptsList(id) {
+  // No prompts defined yet; return empty list for compatibility
+  sendResult(id, { prompts: [] });
 }
 
 // Prompts (from user)
@@ -5715,6 +5755,41 @@ Examples (natural language -> plan):
 // Main JSON-RPC loop
 // ---------------------------------------------------------------------------
 
+// Minimal MCP compatibility shims
+const PROTOCOL_VERSION = "2025-06-18";
+let CLIENT_INITIALIZED = false;
+
+function getPackageVersionSafe() {
+  try {
+    const packagePath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "package.json"
+    );
+    const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+    return String(packageJson.version || "0.0.0");
+  } catch (_) {
+    return "0.0.0";
+  }
+}
+
+function handleInitialize(id, params) {
+  CLIENT_INITIALIZED = true;
+  const result = {
+    protocolVersion: PROTOCOL_VERSION,
+    capabilities: {
+      tools: {},
+      resources: {},
+      prompts: {},
+    },
+    serverInfo: {
+      name: "Zapmail MCP Server",
+      version: getPackageVersionSafe(),
+    },
+  };
+  sendResult(id, result);
+}
+
 let buffer = "";
 stdin.setEncoding("utf8");
 stdin.on("data", (chunk) => {
@@ -5732,14 +5807,36 @@ stdin.on("data", (chunk) => {
       continue;
     }
     const { id, method, params } = msg;
-    if (method === "tools/list") {
+    if (method === "initialize") {
+      handleInitialize(id, params || {});
+    } else if (method === "ping") {
+      // Simple ping response
+      sendResult(id, { ok: true });
+    } else if (method === "notifications/initialized") {
+      // Notification: no response expected
+      CLIENT_INITIALIZED = true;
+    } else if (method === "tools/call") {
+      // Alias to our tools/invoke handler (MCP -> server mapping)
+      const mapped = { tool_name: params?.name, input: params?.arguments, __from_mcp_call: true };
+      handleToolsInvoke(id, mapped);
+    } else if (method === "resources/read") {
+      // Alias to our resources/get handler
+      handleResourcesGet(id, { uri: params?.uri });
+    } else if (method === "tools/list") {
       handleToolsList(id);
     } else if (method === "tools/invoke") {
       handleToolsInvoke(id, params);
     } else if (method === "resources/get") {
       handleResourcesGet(id, params);
+    } else if (method === "resources/list") {
+      handleResourcesList(id);
+    } else if (method === "prompts/list") {
+      handlePromptsList(id);
     } else {
-      sendError(id, -32601, `Unknown method '${method}'.`);
+      // Avoid responding to notifications (no id)
+      if (typeof id !== "undefined") {
+        sendError(id, -32601, `Unknown method '${method}'.`);
+      }
     }
   }
 });
