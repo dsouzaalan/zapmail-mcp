@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server for the Zapmail API that provides natural language access to domain management, mailbox operations, and exports. This package enables AI assistants like Claude to interact with Zapmail through natural language commands.
 
+<a href="https://glama.ai/mcp/servers/@dsouzaalan/zapmail-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@dsouzaalan/zapmail-mcp/badge" alt="Zapmail Server MCP server" />
+</a>
+
 ## Features
 
 - Complete Zapmail API coverage (46+ tools)
