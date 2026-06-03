@@ -4305,7 +4305,6 @@ function buildToolDefinitions() {
         keyword: {
           type: "string",
           description: "Keyword to search for in endpoint descriptions",
-          required: true,
         },
         category: {
           type: "string",
@@ -4411,12 +4410,10 @@ function buildToolDefinitions() {
             "dns",
           ],
           description: "API category",
-          required: true,
         },
         endpoint: {
           type: "string",
           description: "Endpoint name",
-          required: true,
         },
         customParams: {
           type: "object",
