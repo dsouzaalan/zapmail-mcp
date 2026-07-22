@@ -3202,6 +3202,33 @@ const RESERVED_NAMES = new Set([
   "generate_domains",
   "check_domain_availability_batch",
   "plan_and_execute",
+  "list_webhook_event_types",
+  "create_webhook_endpoint",
+  "list_webhook_endpoints",
+  "get_webhook_endpoint",
+  "update_webhook_endpoint",
+  "delete_webhook_endpoint",
+  "test_webhook_endpoint",
+  "emit_dummy_webhook_event",
+  "list_webhook_deliveries",
+  "resend_webhook_delivery",
+  "get_ai_insight_credits",
+  "get_ai_insight_eligible_mailboxes",
+  "calculate_ai_insight_pricing",
+  "generate_mailbox_analysis",
+  "get_mailbox_analysis",
+  "get_mailbox_analysis_by_id",
+  "share_mailbox_analysis",
+  "get_public_mailbox_analysis",
+  "share_mailbox_analysis_by_email",
+  "purchase_ai_insight_for_mailboxes",
+  "purchase_ai_insight_plan",
+  "upgrade_ai_insight_plan",
+  "get_subscriptions_unified",
+  "purchase_subscription_unified",
+  "upgrade_subscription_unified",
+  "cancel_subscription_unified",
+  "get_subscription_mailboxes",
 ]);
 
 function buildDynamicToolMap() {
@@ -3245,6 +3272,15 @@ function buildHeaders(overrides = {}) {
 
 function makeId() {
   return crypto.randomBytes(8).toString("hex");
+}
+
+function buildContextHeaders(input = {}) {
+  const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+  const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+  return {
+    ...(ws ? { "x-workspace-key": ws } : {}),
+    ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+  };
 }
 
 async function apiFetch(
@@ -5116,6 +5152,470 @@ function buildToolDefinitions() {
       required: ["category", "endpoint"],
     },
   });
+
+  // ---------------------------------------------------------------------
+  // Webhooks (v3/webhooks)
+  // ---------------------------------------------------------------------
+
+  tools.push({
+    name: "list_webhook_event_types",
+    title: "List webhook event types",
+    description:
+      "List all webhook event types that can be subscribed to (domain, mailbox, subscription, export, placement test, and workspace events).",
+    input_schema: { type: "object", properties: {} },
+  });
+
+  tools.push({
+    name: "create_webhook_endpoint",
+    title: "Create webhook endpoint",
+    description: "Register a new webhook endpoint URL subscribed to one or more event types.",
+    input_schema: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "HTTPS URL that will receive webhook deliveries." },
+        enabled_events: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Event types to subscribe to, e.g. domain.status_changed, mailbox.status_changed, subscription.status_changed, subscription.billing_changed, export.started, export.completed, export.failed, export.reconnected, placement_test.status_changed, workspace.status_changed, workspace.invitations.",
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["url", "enabled_events"],
+    },
+  });
+
+  tools.push({
+    name: "list_webhook_endpoints",
+    title: "List webhook endpoints",
+    description: "List all webhook endpoints configured for the active workspace.",
+    input_schema: {
+      type: "object",
+      properties: {
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_webhook_endpoint",
+    title: "Get webhook endpoint",
+    description: "Get details of a single webhook endpoint by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "update_webhook_endpoint",
+    title: "Update webhook endpoint",
+    description: "Update a webhook endpoint's URL, subscribed events, or status.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        url: { type: "string", description: "New HTTPS URL." },
+        enabled_events: { type: "array", items: { type: "string" }, description: "New set of subscribed event types." },
+        status: { type: "string", enum: ["active", "disabled"], description: "Endpoint status." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "delete_webhook_endpoint",
+    title: "Delete webhook endpoint",
+    description: "Delete a webhook endpoint by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "test_webhook_endpoint",
+    title: "Send test webhook event",
+    description: "Send a test event delivery to a webhook endpoint to verify connectivity.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "emit_dummy_webhook_event",
+    title: "Emit dummy webhook event",
+    description: "Trigger a dummy webhook event across all matching endpoints, useful for testing integrations end-to-end.",
+    input_schema: {
+      type: "object",
+      properties: {
+        eventType: { type: "string", description: "Event type to emit, e.g. domain.status_changed." },
+        payload: { type: "object", description: "Optional custom payload to include.", additionalProperties: true },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "list_webhook_deliveries",
+    title: "List webhook deliveries",
+    description: "List webhook delivery attempts, optionally filtered by endpoint, status, or event type.",
+    input_schema: {
+      type: "object",
+      properties: {
+        endpoint_id: { type: "string", description: "Filter by webhook endpoint UUID." },
+        status: { type: "string", enum: ["pending", "succeeded", "failed"], description: "Filter by delivery status." },
+        event_type: { type: "string", description: "Filter by event type." },
+        page: { type: "number", description: "Page number." },
+        limit: { type: "number", description: "Page size." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "resend_webhook_delivery",
+    title: "Resend webhook delivery",
+    description: "Retry a previously failed (or any) webhook delivery by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook delivery UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  // ---------------------------------------------------------------------
+  // AI Insight (v3/ai-insight)
+  // ---------------------------------------------------------------------
+
+  const aiInsightMailboxFilterProps = {
+    mailboxIds: { type: "array", items: { type: "string" }, description: "Specific mailbox UUIDs to target." },
+    tagIds: { type: "array", items: { type: "string" }, description: "Filter mailboxes by tag UUIDs." },
+    contains: { type: "string", description: "Substring filter on mailbox/domain." },
+    status: { type: "string", description: "Filter by mailbox status." },
+    filters: {
+      type: "array",
+      description: "Advanced filters, each with field/operator/values.",
+      items: {
+        type: "object",
+        properties: {
+          field: { type: "string" },
+          operator: { type: "string" },
+          values: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+  };
+
+  tools.push({
+    name: "get_ai_insight_credits",
+    title: "Get AI Insight available credits",
+    description: "Get the number of AI Insight analysis credits available in the active workspace.",
+    input_schema: {
+      type: "object",
+      properties: {
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_ai_insight_eligible_mailboxes",
+    title: "Get mailboxes eligible for AI Insight analysis",
+    description: "List mailboxes eligible for AI Insight analysis, optionally filtered by ID, tag, or advanced filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "calculate_ai_insight_pricing",
+    title: "Calculate AI Insight pricing",
+    description: "Calculate the price of running AI Insight analysis on a given set of mailboxes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        billingCycle: { type: "string", enum: ["MONTHLY", "ONE_TIME"], description: "Billing cycle for pricing." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "generate_mailbox_analysis",
+    title: "Generate AI Insight mailbox analysis",
+    description: "Kick off AI Insight analysis generation for the selected mailboxes (deliverability/reputation insights).",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        daysBack: { type: "number", description: "How many days of history to analyze (1-365)." },
+        orderId: { type: "string", description: "Associated order ID, if any." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_mailbox_analysis",
+    title: "List AI Insight mailbox analyses",
+    description: "List generated AI Insight mailbox analyses with pagination and filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        page: { type: "number", description: "Page number." },
+        limit: { type: "number", description: "Page size (max 100)." },
+        status: { type: "string", enum: ["IN_PROGRESS", "FAILED", "SUCCESS"], description: "Filter by analysis status." },
+        mailboxIds: { type: "array", items: { type: "string" }, description: "Filter by mailbox UUIDs." },
+        tagIds: { type: "array", items: { type: "string" }, description: "Filter by tag UUIDs." },
+        contains: { type: "string", description: "Substring filter." },
+        mailboxStatus: { type: "string", description: "Filter by underlying mailbox status." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_mailbox_analysis_by_id",
+    title: "Get AI Insight mailbox analysis by ID",
+    description: "Get a single AI Insight mailbox analysis result by its ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "share_mailbox_analysis",
+    title: "Mark AI Insight analysis as shared",
+    description: "Mark a mailbox analysis as shared, enabling its public link.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "get_public_mailbox_analysis",
+    title: "Get public AI Insight analysis",
+    description: "Fetch a shared/public AI Insight mailbox analysis by ID (no ownership check).",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "share_mailbox_analysis_by_email",
+    title: "Share AI Insight analysis by email",
+    description: "Email a shareable link for an AI Insight mailbox analysis to one or more recipients.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        emails: { type: "array", items: { type: "string" }, description: "Recipient email addresses." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id", "emails"],
+    },
+  });
+
+  tools.push({
+    name: "purchase_ai_insight_for_mailboxes",
+    title: "Purchase AI Insight for mailboxes",
+    description: "Purchase one-off AI Insight analysis credits for a specific set of mailboxes (wallet-based).",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "purchase_ai_insight_plan",
+    title: "Purchase AI Insight plan",
+    description: "Purchase a recurring AI Insight subscription plan (starter/growth/pro, monthly or LTD).",
+    input_schema: {
+      type: "object",
+      properties: {
+        planName: { type: "string", description: "Plan name, e.g. starter, growth, pro." },
+        billingCycle: { type: "string", description: "Billing cycle, e.g. monthly, ltd." },
+        useWallet: { type: "boolean", description: "Prefer wallet balance for payment." },
+        successUrl: { type: "string", description: "Redirect URL on successful checkout." },
+        cancelUrl: { type: "string", description: "Redirect URL on cancelled checkout." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["planName", "billingCycle"],
+    },
+  });
+
+  tools.push({
+    name: "upgrade_ai_insight_plan",
+    title: "Upgrade AI Insight plan",
+    description: "Upgrade an existing AI Insight subscription to a higher monthly plan.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "AI Insight subscription ID to upgrade." },
+        newLookupKey: {
+          type: "string",
+          enum: ["AI_INSIGHT_STARTER_MONTHLY", "AI_INSIGHT_GROWTH_MONTHLY", "AI_INSIGHT_PRO_MONTHLY"],
+          description: "Target plan lookup key (monthly only).",
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId", "newLookupKey"],
+    },
+  });
+
+  // ---------------------------------------------------------------------
+  // Unified subscriptions (v3/subscriptions)
+  // ---------------------------------------------------------------------
+
+  tools.push({
+    name: "get_subscriptions_unified",
+    title: "Get subscriptions (unified)",
+    description:
+      "List subscriptions across all types (MAILBOXES, PREWARMED, DNS_SHIELD, PLACEMENT_TEST, AI_INSIGHT) in one unified call, with optional status/name/type filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["ACTIVE", "CANCELLED", "PAUSED", "PAYMENT_PENDING", "PAST_DUE"], description: "Filter by subscription status." },
+        contains: { type: "string", description: "Substring filter on subscription/plan name." },
+        subscriptionType: {
+          type: "array",
+          items: { type: "string", enum: ["MAILBOXES", "PREWARMED", "DNS_SHIELD", "PLACEMENT_TEST", "AI_INSIGHT"] },
+          description: "Filter by one or more subscription types.",
+        },
+        workspaceId: { type: "string", description: "Filter by a specific workspace UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override (for auth headers)" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "purchase_subscription_unified",
+    title: "Purchase subscription (unified)",
+    description: "Purchase a Zapmail mailbox subscription plan (mvp/starter, growth, pro) with wallet-first billing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        planName: { type: "string", description: "Plan name, e.g. mvp, starter, growth, pro." },
+        billingCycle: { type: "string", description: "Billing cycle." },
+        serviceProviderPlan: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Mailbox provider for the purchased plan." },
+        rewardfulReferral: { type: "string", description: "Rewardful referral ID." },
+        referralStackReferral: { type: "string", description: "ReferralStack referral ID." },
+        email: { type: "string", description: "Email to associate with the purchase." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override for auth headers" },
+      },
+      required: ["planName", "serviceProviderPlan"],
+    },
+  });
+
+  tools.push({
+    name: "upgrade_subscription_unified",
+    title: "Upgrade subscription (unified)",
+    description: "Upgrade an existing mailbox subscription to a higher plan lookup key.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID to upgrade." },
+        uniquePlanKey: { type: "string", description: "Target plan lookup key, e.g. ZAPMAIL_GROWTH, ZAPMAIL_PRO." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId", "uniquePlanKey"],
+    },
+  });
+
+  tools.push({
+    name: "cancel_subscription_unified",
+    title: "Cancel subscription (unified)",
+    description: "Cancel (or revert cancellation of) a mailbox subscription.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID to cancel." },
+        revertCancellation: { type: "boolean", description: "Set true to undo a pending cancellation instead." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId"],
+    },
+  });
+
+  tools.push({
+    name: "get_subscription_mailboxes",
+    title: "Get mailboxes in a subscription",
+    description: "List the mailboxes that belong to a specific subscription.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId"],
+    },
+  });
+
   for (const { slug, title, description } of ENDPOINTS) {
     const toolName = slug.replace(/-/g, "_");
     if (RESERVED_NAMES.has(toolName)) continue;
@@ -6159,6 +6659,386 @@ async function handleToolsInvoke(id, params) {
       } catch (error) {
         sendError(id, -32000, error.message);
       }
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // Webhooks (v3/webhooks)
+    // -----------------------------------------------------------------
+
+    if (name === "list_webhook_event_types") {
+      const data = await apiFetch("/v3/webhooks/events", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "create_webhook_endpoint") {
+      if (typeof input.url !== "string")
+        throw new ValidationError("'url' is required and must be a string", "url", input.url);
+      if (!Array.isArray(input.enabled_events) || input.enabled_events.length === 0)
+        throw new ValidationError(
+          "'enabled_events' must be a non-empty array",
+          "enabled_events",
+          input.enabled_events
+        );
+      const data = await apiFetch("/v3/webhooks/endpoints", {
+        method: "POST",
+        body: { url: input.url, enabled_events: input.enabled_events },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "list_webhook_endpoints") {
+      const data = await apiFetch("/v3/webhooks/endpoints", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "update_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const body = {};
+      if (typeof input.url === "string") body.url = input.url;
+      if (Array.isArray(input.enabled_events)) body.enabled_events = input.enabled_events;
+      if (typeof input.status === "string") body.status = input.status;
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "PATCH",
+        body,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "delete_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "DELETE",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "test_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}/test`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "emit_dummy_webhook_event") {
+      const body = {};
+      if (typeof input.eventType === "string") body.eventType = input.eventType;
+      if (input.payload && typeof input.payload === "object") body.payload = input.payload;
+      const data = await apiFetch("/v3/webhooks/emit-dummy", {
+        method: "POST",
+        body,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "list_webhook_deliveries") {
+      const query = {};
+      if (typeof input.endpoint_id === "string") query.endpoint_id = input.endpoint_id;
+      if (typeof input.status === "string") query.status = input.status;
+      if (typeof input.event_type === "string") query.event_type = input.event_type;
+      if (input.page !== undefined) query.page = input.page;
+      if (input.limit !== undefined) query.limit = input.limit;
+      const data = await apiFetch("/v3/webhooks/deliveries", {
+        method: "GET",
+        query,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "resend_webhook_delivery") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/deliveries/${encodeURIComponent(input.id)}/resend`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // AI Insight (v3/ai-insight)
+    // -----------------------------------------------------------------
+
+    if (name === "get_ai_insight_credits") {
+      const data = await apiFetch("/v3/ai-insight/available-credits", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_ai_insight_eligible_mailboxes") {
+      const { mailboxIds, tagIds, contains, filters } = input;
+      const data = await apiFetch("/v3/ai-insight/eligible-mailboxes", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, filters },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "calculate_ai_insight_pricing") {
+      const { mailboxIds, tagIds, contains, filters, billingCycle } = input;
+      const data = await apiFetch("/v3/ai-insight/calculate-pricing", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, filters, billingCycle },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "generate_mailbox_analysis") {
+      const { mailboxIds, tagIds, contains, status, filters, daysBack, orderId } = input;
+      const data = await apiFetch("/v3/ai-insight/generate-mailbox-analysis", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, status, filters, daysBack, orderId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_mailbox_analysis") {
+      const { page, limit, status, mailboxIds, tagIds, contains, mailboxStatus } = input;
+      const data = await apiFetch("/v3/ai-insight/mailbox-analysis", {
+        method: "POST",
+        body: { page, limit, status, mailboxIds, tagIds, contains, mailboxStatus },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_mailbox_analysis_by_id") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}`, {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "share_mailbox_analysis") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/share`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_public_mailbox_analysis") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/public`, {
+        method: "GET",
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "share_mailbox_analysis_by_email") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      if (!Array.isArray(input.emails) || input.emails.length === 0)
+        throw new ValidationError("'emails' must be a non-empty array", "emails", input.emails);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/share-email`, {
+        method: "POST",
+        body: { emails: input.emails },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_ai_insight_for_mailboxes") {
+      const { mailboxIds, tagIds, contains, status, filters } = input;
+      const data = await apiFetch("/v3/ai-insight/purchase-mailboxes", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, status, filters },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_ai_insight_plan") {
+      if (typeof input.planName !== "string")
+        throw new ValidationError("'planName' is required and must be a string", "planName", input.planName);
+      if (typeof input.billingCycle !== "string")
+        throw new ValidationError("'billingCycle' is required and must be a string", "billingCycle", input.billingCycle);
+      const data = await apiFetch("/v3/ai-insight/purchase-plan", {
+        method: "POST",
+        body: {
+          planName: input.planName,
+          billingCycle: input.billingCycle,
+          useWallet: input.useWallet,
+          successUrl: input.successUrl,
+          cancelUrl: input.cancelUrl,
+        },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "upgrade_ai_insight_plan") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      if (typeof input.newLookupKey !== "string")
+        throw new ValidationError(
+          "'newLookupKey' is required and must be a string",
+          "newLookupKey",
+          input.newLookupKey
+        );
+      const data = await apiFetch("/v3/ai-insight/upgrade-plan", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, newLookupKey: input.newLookupKey },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // Unified subscriptions (v3/subscriptions)
+    // -----------------------------------------------------------------
+
+    if (name === "get_subscriptions_unified") {
+      const { status, contains, subscriptionType, workspaceId } = input;
+      const data = await apiFetch("/v3/subscriptions", {
+        method: "POST",
+        body: { status, contains, subscriptionType, workspaceId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_subscription_unified") {
+      if (typeof input.planName !== "string")
+        throw new ValidationError("'planName' is required and must be a string", "planName", input.planName);
+      if (typeof input.serviceProviderPlan !== "string")
+        throw new ValidationError(
+          "'serviceProviderPlan' is required and must be a string",
+          "serviceProviderPlan",
+          input.serviceProviderPlan
+        );
+      const query = {
+        planName: input.planName,
+        serviceProvider: input.serviceProviderPlan,
+      };
+      if (input.billingCycle) query.billingCycle = input.billingCycle;
+      if (input.rewardfulReferral) query.rewardfulReferral = input.rewardfulReferral;
+      if (input.referralStackReferral) query.referralStackReferral = input.referralStackReferral;
+      if (input.email) query.email = input.email;
+      const data = await apiFetch("/v3/subscriptions/purchase", {
+        method: "POST",
+        query,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "upgrade_subscription_unified") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      if (typeof input.uniquePlanKey !== "string")
+        throw new ValidationError(
+          "'uniquePlanKey' is required and must be a string",
+          "uniquePlanKey",
+          input.uniquePlanKey
+        );
+      const data = await apiFetch("/v3/subscriptions/upgrade", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, uniquePlanKey: input.uniquePlanKey },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "cancel_subscription_unified") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      const data = await apiFetch("/v3/subscriptions/cancel", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, revertCancellation: input.revertCancellation },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_subscription_mailboxes") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      const data = await apiFetch("/v3/subscriptions/mailboxes", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
       return;
     }
 
