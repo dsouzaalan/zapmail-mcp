@@ -6688,6 +6688,7 @@ async function handleToolsInvoke(id, params) {
         method: "POST",
         body: { url: input.url, enabled_events: input.enabled_events },
         headers: buildContextHeaders(input),
+        maxRetries: 0,
       });
       sendToolResult(data);
       return;
@@ -6900,6 +6901,7 @@ async function handleToolsInvoke(id, params) {
         method: "POST",
         body: { mailboxIds, tagIds, contains, status, filters },
         headers: buildContextHeaders(input),
+        maxRetries: 0,
       });
       sendToolResult(data);
       return;
@@ -6920,6 +6922,7 @@ async function handleToolsInvoke(id, params) {
           cancelUrl: input.cancelUrl,
         },
         headers: buildContextHeaders(input),
+        maxRetries: 0,
       });
       sendToolResult(data);
       return;
@@ -6983,6 +6986,7 @@ async function handleToolsInvoke(id, params) {
         method: "POST",
         query,
         headers: buildContextHeaders(input),
+        maxRetries: 0,
       });
       sendToolResult(data);
       return;
