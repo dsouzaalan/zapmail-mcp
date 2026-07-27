@@ -4611,6 +4611,12 @@ function buildToolDefinitions() {
         serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
       },
       required: ["domainIds"],
+      anyOf: [
+        { required: ["forwarding"] },
+        { required: ["dmarc"] },
+        { required: ["emailForwarding"] },
+        { required: ["catchAll"] },
+      ],
     },
   });
   tools.push({
@@ -5871,6 +5877,7 @@ async function handleToolsInvoke(id, params) {
         method: "POST",
         headers,
         body: { domains },
+        maxRetries: 0,
       });
       sendToolResult(res);
       return;
@@ -5879,6 +5886,10 @@ async function handleToolsInvoke(id, params) {
       const { domainIds, forwarding, dmarc, emailForwarding, catchAll } = input;
       if (!Array.isArray(domainIds) || domainIds.length === 0)
         throw new Error("'domainIds' must be a non-empty array");
+      if (!forwarding && !dmarc && !emailForwarding && !catchAll)
+        throw new Error(
+          "At least one of 'forwarding', 'dmarc', 'emailForwarding', or 'catchAll' must be provided",
+        );
       const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
       const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
       const headers = {
