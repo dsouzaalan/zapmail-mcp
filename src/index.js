@@ -765,7 +765,7 @@ const API_ENDPOINT_SYSTEM = {
       "Manage workspaces, switch contexts, and view workspace information",
     endpoints: {
       listWorkspaces: {
-        path: "/v2/workspaces",
+        path: "/v3/workspaces",
         method: "GET",
         description: "List all workspaces accessible to the user",
         parameters: {},
@@ -787,6 +787,141 @@ const API_ENDPOINT_SYSTEM = {
           "Note workspace IDs for programmatic access",
         ],
       },
+
+      deleteWorkspace: {
+        path: "/v3/workspaces",
+        method: "DELETE",
+        description: "Delete a workspace",
+        parameters: {
+          body: { workspaceId: "Workspace ID to delete (required)" },
+        },
+        response: { success: "Deletion confirmation" },
+        useCases: ["Remove unused workspaces"],
+        bestPractices: ["Ensure all domains and mailboxes are migrated first"],
+      },
+
+      listWorkspaceMembers: {
+        path: "/v3/workspaces/members",
+        method: "GET",
+        description: "List all members of the current workspace",
+        parameters: {},
+        response: { success: "Array of workspace member objects" },
+        useCases: ["View workspace team", "Audit member access"],
+        bestPractices: [],
+      },
+
+      updateMemberRole: {
+        path: "/v3/workspaces/members",
+        method: "PUT",
+        description: "Update a workspace member's role",
+        parameters: {
+          body: {
+            memberId: "Member user ID (required)",
+            role: "New role to assign (required)",
+          },
+        },
+        response: { success: "Updated member object" },
+        useCases: ["Change member permissions"],
+        bestPractices: ["Use least-privilege roles"],
+      },
+
+      removeMember: {
+        path: "/v3/workspaces/members",
+        method: "DELETE",
+        description: "Remove a member from the workspace",
+        parameters: {
+          body: { memberId: "Member user ID to remove (required)" },
+        },
+        response: { success: "Removal confirmation" },
+        useCases: ["Remove team members who no longer need access"],
+        bestPractices: ["Transfer member's resources before removal"],
+      },
+
+      leaveWorkspace: {
+        path: "/v3/workspaces/leave",
+        method: "POST",
+        description: "Leave the current workspace",
+        parameters: {},
+        response: { success: "Leave confirmation" },
+        useCases: ["Exit a workspace you no longer manage"],
+        bestPractices: ["Ensure another admin exists before leaving"],
+      },
+
+      sendInvitation: {
+        path: "/v3/workspaces/invitations",
+        method: "POST",
+        description: "Send a workspace invitation to a user",
+        parameters: {
+          body: {
+            email: "Invitee email address (required)",
+            role: "Role to assign on acceptance (required)",
+          },
+        },
+        response: { success: "Invitation confirmation" },
+        useCases: ["Invite team members to workspace"],
+        bestPractices: ["Set correct role before inviting"],
+      },
+
+      listInvitations: {
+        path: "/v3/workspaces/invitations",
+        method: "GET",
+        description: "List pending workspace invitations",
+        parameters: {},
+        response: { success: "Array of invitation objects" },
+        useCases: ["View pending invitations", "Track invitation status"],
+        bestPractices: [],
+      },
+
+      cancelInvitation: {
+        path: "/v3/workspaces/invitations",
+        method: "DELETE",
+        description: "Cancel a pending workspace invitation",
+        parameters: {
+          body: { invitationId: "Invitation ID to cancel (required)" },
+        },
+        response: { success: "Cancellation confirmation" },
+        useCases: ["Cancel accidental or unwanted invitations"],
+        bestPractices: [],
+      },
+
+      acceptInvitation: {
+        path: "/v3/workspaces/invitations/accept",
+        method: "POST",
+        description: "Accept a workspace invitation",
+        parameters: {
+          body: { invitationToken: "Invitation token (required)" },
+        },
+        response: { success: "Acceptance confirmation with workspace details" },
+        useCases: ["Join a workspace via invitation"],
+        bestPractices: [],
+      },
+
+      rejectInvitation: {
+        path: "/v3/workspaces/invitations/reject",
+        method: "POST",
+        description: "Reject a workspace invitation",
+        parameters: {
+          body: { invitationToken: "Invitation token (required)" },
+        },
+        response: { success: "Rejection confirmation" },
+        useCases: ["Decline unwanted workspace invitations"],
+        bestPractices: [],
+      },
+
+      updateDomainRenewalSettings: {
+        path: "/v3/workspaces/update-domain-renewal-settings",
+        method: "POST",
+        description: "Update bulk domain renewal settings for the workspace",
+        parameters: {
+          body: {
+            autoRenew: "Enable auto-renew for all domains (required)",
+            renewalPeriod: "Default renewal period in years",
+          },
+        },
+        response: { success: "Settings update confirmation" },
+        useCases: ["Bulk configure domain renewal behavior"],
+        bestPractices: ["Enable auto-renew to prevent accidental expirations"],
+      },
     },
     commonScenarios: {
       switchWorkspace: {
@@ -798,9 +933,9 @@ const API_ENDPOINT_SYSTEM = {
           "3. Verify the workspace switch by listing domains or mailboxes",
         ],
         example: {
-          step1: "GET /v2/workspaces",
+          step1: "GET /v3/workspaces",
           step2: "Set ZAPMAIL_WORKSPACE_KEY=target_workspace_id",
-          step3: "GET /v2/domains (to verify context)",
+          step3: "GET /v3/domains (to verify context)",
         },
       },
     },
@@ -813,7 +948,7 @@ const API_ENDPOINT_SYSTEM = {
       "Manage domains, check availability, purchase, and configure domains",
     endpoints: {
       listDomains: {
-        path: "/v2/domains",
+        path: "/v3/domains",
         method: "GET",
         description: "List all domains in the current workspace",
         parameters: {
@@ -854,7 +989,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       checkAvailability: {
-        path: "/v2/domains/available",
+        path: "/v3/domains/available",
         method: "POST",
         description: "Check domain availability for registration",
         parameters: {
@@ -885,7 +1020,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       purchaseDomains: {
-        path: "/v2/domains/buy",
+        path: "/v3/domains/buy",
         method: "POST",
         description: "Purchase domains using wallet or payment method",
         parameters: {
@@ -919,7 +1054,7 @@ const API_ENDPOINT_SYSTEM = {
 
       // Additional domain endpoints from official documentation
       listAssignableDomains: {
-        path: "/v2/domains/assignable",
+        path: "/v3/domains/assignable",
         method: "GET",
         description:
           "List domains that can be assigned to the current workspace",
@@ -943,14 +1078,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       addDmarcRecord: {
-        path: "/v2/domains/{domainId}/dmarc",
+        path: "/v3/domains/dmarc",
         method: "POST",
         description: "Add DMARC record to domain for email authentication",
         parameters: {
-          path: {
-            domainId: "Domain ID to add DMARC record to (required)",
-          },
           body: {
+            domainId: "Domain ID to add DMARC record to (required, pass in body)",
             dmarcRecord: "DMARC record content (required)",
             policy: "DMARC policy (none, quarantine, reject)",
           },
@@ -976,14 +1109,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       addDomainForwarding: {
-        path: "/v2/domains/{domainId}/forwarding",
+        path: "/v3/domains/forwarding",
         method: "POST",
         description: "Add domain forwarding rules",
         parameters: {
-          path: {
-            domainId: "Domain ID to add forwarding to (required)",
-          },
           body: {
+            domainId: "Domain ID to add forwarding to (required, pass in body)",
             forwardingRules: "Array of forwarding rules (required)",
             targetEmail: "Target email address for forwarding",
           },
@@ -1009,12 +1140,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       getNameservers: {
-        path: "/v2/domains/{domainId}/nameservers",
+        path: "/v3/domains/name-servers",
         method: "GET",
         description: "Get nameserver information for domain connection",
         parameters: {
-          path: {
-            domainId: "Domain ID to get nameservers for (required)",
+          query: {
+            domainId: "Domain ID to get nameservers for (required, pass as query param)",
           },
         },
         response: {
@@ -1038,12 +1169,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       verifyNameserverPropagation: {
-        path: "/v2/domains/{domainId}/nameservers/verify",
+        path: "/v3/domains/name-servers/verify",
         method: "POST",
         description: "Verify nameserver propagation and domain connection",
         parameters: {
-          path: {
-            domainId: "Domain ID to verify (required)",
+          body: {
+            domainId: "Domain ID to verify (required, pass in body)",
           },
         },
         response: {
@@ -1068,14 +1199,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       connectDomain: {
-        path: "/v2/domains/{domainId}/connect",
+        path: "/v3/domains/connect",
         method: "POST",
         description: "Connect domain with Zapmail (new method)",
         parameters: {
-          path: {
-            domainId: "Domain ID to connect (required)",
-          },
           body: {
+            domainId: "Domain ID to connect (required, pass in body)",
             connectionType: "Type of connection (required)",
             settings: "Connection-specific settings",
           },
@@ -1101,14 +1230,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       enableEmailForwarding: {
-        path: "/v2/domains/{domainId}/forwarding/enable",
+        path: "/v3/domains/forwarding",
         method: "POST",
         description: "Enable email forwarding for domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to enable forwarding for (required)",
-          },
           body: {
+            domainId: "Domain ID to enable forwarding for (required, pass in body)",
             forwardingConfig: "Email forwarding configuration",
           },
         },
@@ -1133,12 +1260,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeEmailForwarding: {
-        path: "/v2/domains/{domainId}/forwarding/disable",
+        path: "/v3/domains/remove-forwarding",
         method: "POST",
         description: "Remove email forwarding from domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to remove forwarding from (required)",
+          body: {
+            domainId: "Domain ID to remove forwarding from (required, pass in body)",
           },
         },
         response: {
@@ -1162,14 +1289,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       enableCatchAll: {
-        path: "/v2/domains/{domainId}/catchall/enable",
+        path: "/v3/domains/catch-all",
         method: "POST",
         description: "Enable catch-all email handling for domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to enable catch-all for (required)",
-          },
           body: {
+            domainId: "Domain ID to enable catch-all for (required, pass in body)",
             catchAllEmail: "Email address to receive catch-all emails",
           },
         },
@@ -1194,12 +1319,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeCatchAll: {
-        path: "/v2/domains/{domainId}/catchall/disable",
-        method: "POST",
+        path: "/v3/domains/catch-all",
+        method: "DELETE",
         description: "Remove catch-all email handling from domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to remove catch-all from (required)",
+          body: {
+            domainId: "Domain ID to remove catch-all from (required, pass in body)",
           },
         },
         response: {
@@ -1223,12 +1348,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       checkDnsRecords: {
-        path: "/v2/domains/{domainId}/dns/check",
+        path: "/v3/domains/dns/check",
         method: "GET",
         description: "Check DNS records for domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to check DNS for (required)",
+          query: {
+            domainId: "Domain ID to check DNS for (required, pass as query param)",
           },
         },
         response: {
@@ -1255,8 +1380,8 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeUnusedDomains: {
-        path: "/v2/domains/unused/remove",
-        method: "POST",
+        path: "/v3/domains",
+        method: "DELETE",
         description: "Remove unused domains from workspace",
         parameters: {
           body: {
@@ -1286,7 +1411,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       getDomainPurchaseLink: {
-        path: "/v2/domains/purchase-link",
+        path: "/v3/domains/buy",
         method: "POST",
         description: "Get payment link for domain purchase",
         parameters: {
@@ -1317,7 +1442,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       getDomainConnectionRequests: {
-        path: "/v2/domains/connection-requests",
+        path: "/v3/domains/connection-requests",
         method: "GET",
         description: "Get pending domain connection requests",
         parameters: {},
@@ -1345,7 +1470,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeDomainConnectionRequests: {
-        path: "/v2/domains/connection-requests/{requestId}",
+        path: "/v3/domains/connection-requests/{requestId}",
         method: "DELETE",
         description: "Remove domain connection request",
         parameters: {
@@ -1374,14 +1499,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       addGoogleClientId: {
-        path: "/v2/domains/{domainId}/google-client-id",
+        path: "/v3/domains/add-client-id",
         method: "POST",
         description: "Add Google Client ID to domain for OAuth integration",
         parameters: {
-          path: {
-            domainId: "Domain ID to add Google Client ID to (required)",
-          },
           body: {
+            domainId: "Domain ID to add Google Client ID to (required, pass in body)",
             clientId: "Google OAuth Client ID (required)",
             clientSecret: "Google OAuth Client Secret (required)",
           },
@@ -1405,6 +1528,325 @@ const API_ENDPOINT_SYSTEM = {
           "Test OAuth integration",
         ],
       },
+
+      checkAvailabilityBulk: {
+        path: "/v3/domains/available-bulk",
+        method: "POST",
+        description: "Bulk domain availability check for multiple domains at once",
+        parameters: {
+          body: {
+            domains: "Array of domain names to check (required)",
+            years: "Registration period in years (default: 1)",
+          },
+        },
+        response: { success: "Array of availability results per domain" },
+        useCases: ["Check many domains at once", "Batch availability queries"],
+        bestPractices: ["Use this instead of multiple single checks for efficiency"],
+      },
+
+      connectDomainNew: {
+        path: "/v3/domains/connect-domain",
+        method: "POST",
+        description: "Connect a domain to Zapmail",
+        parameters: {
+          body: {
+            domainName: "Domain name to connect (required)",
+          },
+        },
+        response: { success: "Connection status" },
+        useCases: ["Connect existing domain to Zapmail"],
+        bestPractices: ["Verify DNS before connecting"],
+      },
+
+      getDomainHealthScore: {
+        path: "/v3/domains/health-score",
+        method: "GET",
+        description: "Get domain health score",
+        parameters: { query: { domainId: "Domain ID (required)" } },
+        response: { success: "Domain health score and details" },
+        useCases: ["Check domain email health", "Monitor deliverability"],
+        bestPractices: ["Check regularly and act on low scores"],
+      },
+
+      aiDomainFinder: {
+        path: "/v3/domains/ai-finder",
+        method: "POST",
+        description: "AI-powered domain finder",
+        parameters: {
+          body: {
+            keywords: "Keywords to base domain suggestions on (required)",
+            tlds: "Preferred TLD list",
+            count: "Number of suggestions to return",
+          },
+        },
+        response: { success: "Array of suggested domain names" },
+        useCases: ["Find good domain names using AI"],
+        bestPractices: ["Combine with availability check before purchasing"],
+      },
+
+      moveDomainWorkspace: {
+        path: "/v3/domains/move-workspace",
+        method: "POST",
+        description: "Move domains to another workspace",
+        parameters: {
+          body: {
+            domainIds: "Array of domain IDs to move (required)",
+            targetWorkspaceId: "Target workspace ID (required)",
+          },
+        },
+        response: { success: "Move confirmation" },
+        useCases: ["Reorganize domains across workspaces"],
+        bestPractices: ["Verify target workspace permissions"],
+      },
+
+      assignTagToDomain: {
+        path: "/v3/domains/assign-tag",
+        method: "POST",
+        description: "Assign tag to domain",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required)",
+            tagId: "Tag ID to assign (required)",
+          },
+        },
+        response: { success: "Tag assignment confirmation" },
+        useCases: ["Organize domains with tags"],
+        bestPractices: ["Create tags before assigning"],
+      },
+
+      getDomainTags: {
+        path: "/v3/domains/tags",
+        method: "GET",
+        description: "Get all domain tags",
+        parameters: {},
+        response: { success: "Array of tag objects" },
+        useCases: ["List available tags for domains"],
+        bestPractices: [],
+      },
+
+      createDomainTag: {
+        path: "/v3/domains/tags",
+        method: "POST",
+        description: "Create a domain tag",
+        parameters: {
+          body: {
+            name: "Tag name (required)",
+            color: "Tag color",
+          },
+        },
+        response: { success: "Created tag object" },
+        useCases: ["Create tags for domain organization"],
+        bestPractices: [],
+      },
+
+      deleteDomainTag: {
+        path: "/v3/domains/tags/delete",
+        method: "POST",
+        description: "Delete a domain tag",
+        parameters: {
+          body: {
+            tagId: "Tag ID to delete (required)",
+          },
+        },
+        response: { success: "Deletion confirmation" },
+        useCases: ["Remove unused tags"],
+        bestPractices: ["Remove tag assignments before deleting"],
+      },
+
+      removeDomainTag: {
+        path: "/v3/domains/tags/remove",
+        method: "POST",
+        description: "Remove tag from domain",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required)",
+            tagId: "Tag ID to remove (required)",
+          },
+        },
+        response: { success: "Removal confirmation" },
+        useCases: ["Untag a domain"],
+        bestPractices: [],
+      },
+
+      getDomainsRenewingSoon: {
+        path: "/v3/domains/renewal-soon",
+        method: "POST",
+        description: "Get domains renewing soon",
+        parameters: {
+          body: {
+            daysAhead: "Number of days ahead to check (optional)",
+          },
+        },
+        response: { success: "Array of domains renewing soon" },
+        useCases: ["Plan renewals", "Avoid unexpected expirations"],
+        bestPractices: ["Check weekly and renew in advance"],
+      },
+
+      getDomainRenewalPrice: {
+        path: "/v3/domains/get-renewal-price",
+        method: "POST",
+        description: "Get domain renewal price",
+        parameters: {
+          body: {
+            domainIds: "Array of domain IDs to get renewal price for (required)",
+          },
+        },
+        response: { success: "Renewal price per domain" },
+        useCases: ["Estimate renewal costs"],
+        bestPractices: ["Check price before bulk renewal"],
+      },
+
+      renewDomains: {
+        path: "/v3/domains/renew",
+        method: "POST",
+        description: "Renew domains",
+        parameters: {
+          body: {
+            domainIds: "Array of domain IDs to renew (required)",
+            years: "Renewal period in years (default: 1)",
+          },
+        },
+        response: { success: "Renewal confirmation" },
+        useCases: ["Renew expiring domains"],
+        bestPractices: ["Check wallet balance before bulk renewal"],
+      },
+
+      updateAutoRenew: {
+        path: "/v3/domains/update-auto-renew",
+        method: "POST",
+        description: "Update auto-renew settings for domains",
+        parameters: {
+          body: {
+            domainIds: "Array of domain IDs (required)",
+            autoRenew: "Enable or disable auto-renew (required)",
+          },
+        },
+        response: { success: "Auto-renew update confirmation" },
+        useCases: ["Enable or disable auto-renewal"],
+        bestPractices: ["Enable auto-renew for critical domains"],
+      },
+
+      getBuybackEligibleDomains: {
+        path: "/v3/domains/buyback/eligible",
+        method: "POST",
+        description: "Get buyback-eligible domains",
+        parameters: {
+          body: {
+            domainIds: "Array of domain IDs to check (optional)",
+          },
+        },
+        response: { success: "Array of buyback-eligible domains with pricing" },
+        useCases: ["Check which domains can be sold back"],
+        bestPractices: ["Review pricing before selling"],
+      },
+
+      sellDomainBuyback: {
+        path: "/v3/domains/buyback/sell",
+        method: "POST",
+        description: "Sell domain via buyback program",
+        parameters: {
+          body: {
+            domainId: "Domain ID to sell (required)",
+          },
+        },
+        response: { success: "Sale confirmation with payout details" },
+        useCases: ["Sell unused domains back"],
+        bestPractices: ["Verify domain is not needed before selling"],
+      },
+
+      listDomainsWithFilters: {
+        path: "/v3/domains",
+        method: "POST",
+        description: "List domains with advanced body-based filters (alternative to GET)",
+        parameters: {
+          body: {
+            status: "Filter by domain status (optional)",
+            tags: "Filter by tag IDs (optional)",
+            search: "Search term (optional)",
+          },
+        },
+        response: { success: "Filtered list of domains" },
+        useCases: ["Advanced domain filtering", "Search domains by criteria"],
+        bestPractices: ["Use GET for simple listing, POST for complex filters"],
+      },
+
+      checkWorkspaceStatus: {
+        path: "/v3/domains/workspace/check",
+        method: "POST",
+        description: "Check if a workspace already exists for a domain name",
+        parameters: {
+          body: { domainName: "Domain name to check (required)" },
+        },
+        response: { success: "Workspace existence status for the domain" },
+        useCases: ["Verify domain availability before workspace creation"],
+        bestPractices: ["Run before attempting domain connect"],
+      },
+
+      enableEmailForwarding: {
+        path: "/v3/domains/email-forwarding",
+        method: "POST",
+        description: "Enable email forwarding for a domain",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required, in body)",
+            forwardingEmail: "Email address to forward to (required)",
+          },
+        },
+        response: { success: "Email forwarding enabled confirmation" },
+        useCases: ["Route domain email to another address"],
+        bestPractices: ["Verify the target email address before enabling"],
+      },
+
+      disableEmailForwarding: {
+        path: "/v3/domains/email-forwarding",
+        method: "DELETE",
+        description: "Disable email forwarding for a domain",
+        parameters: {
+          body: { domainId: "Domain ID (required, in body)" },
+        },
+        response: { success: "Email forwarding disabled confirmation" },
+        useCases: ["Stop email forwarding for a domain"],
+        bestPractices: ["Confirm no one relies on forwarding before disabling"],
+      },
+
+      getNextRenewalDate: {
+        path: "/v3/domains/get-next-renewal-date",
+        method: "POST",
+        description: "Get the next renewal date for a domain",
+        parameters: {
+          body: { domainId: "Domain ID (required, in body)" },
+        },
+        response: { success: "Next renewal date for the domain" },
+        useCases: ["Check when a domain needs renewal", "Plan budget for renewals"],
+        bestPractices: ["Check renewal dates proactively to avoid expiry"],
+      },
+
+      updateComplianceRules: {
+        path: "/v3/domains/update-compliance-rules",
+        method: "PUT",
+        description: "Update email compliance rules for a domain",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required, in body)",
+            rules: "Compliance rule configuration object (required)",
+          },
+        },
+        response: { success: "Updated compliance rules confirmation" },
+        useCases: ["Set sending limits", "Configure compliance policies"],
+        bestPractices: ["Review rules carefully before applying"],
+      },
+
+      getComplianceRules: {
+        path: "/v3/domains/get-compliance-rules",
+        method: "GET",
+        description: "Get current compliance rules for a domain",
+        parameters: {
+          query: { domainId: "Domain ID to fetch rules for (required)" },
+        },
+        response: { success: "Current compliance rules for the domain" },
+        useCases: ["Audit compliance configuration", "Verify rules are active"],
+        bestPractices: ["Review regularly to ensure rules are current"],
+      },
     },
     commonScenarios: {
       bulkDomainPurchase: {
@@ -1417,10 +1859,10 @@ const API_ENDPOINT_SYSTEM = {
           "4. Verify successful registration",
         ],
         example: {
-          step1: "GET /v2/wallet/balance",
-          step2: "POST /v2/domains/available (for each domain)",
-          step3: "POST /v2/domains/buy",
-          step4: "GET /v2/domains (to verify)",
+          step1: "GET /v3/wallet/balance",
+          step2: "POST /v3/domains/available (for each domain)",
+          step3: "POST /v3/domains/buy",
+          step4: "GET /v3/domains (to verify)",
         },
       },
 
@@ -1434,7 +1876,7 @@ const API_ENDPOINT_SYSTEM = {
           "3. Use these domains for mailbox creation",
         ],
         example: {
-          step1: "GET /v2/domains",
+          step1: "GET /v3/domains",
           step2: "Filter results where mailboxCount === 0",
           step3: "Use domain IDs for mailbox creation",
         },
@@ -1448,7 +1890,7 @@ const API_ENDPOINT_SYSTEM = {
     description: "Create, manage, and configure mailboxes",
     endpoints: {
       listMailboxes: {
-        path: "/v2/mailboxes",
+        path: "/v3/mailboxes",
         method: "GET",
         description: "List all mailboxes in the current workspace",
         parameters: {
@@ -1490,7 +1932,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       createMailboxes: {
-        path: "/v2/mailboxes",
+        path: "/v3/mailboxes",
         method: "POST",
         description: "Create new mailboxes on specified domains",
         parameters: {
@@ -1522,14 +1964,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       updateMailbox: {
-        path: "/v2/mailboxes/{mailboxId}",
+        path: "/v3/mailboxes",
         method: "PUT",
         description: "Update mailbox details and configuration",
         parameters: {
-          path: {
-            mailboxId: "ID of the mailbox to update (required)",
-          },
           body: {
+            id: "ID of the mailbox to update (required, pass in body)",
             firstName: "First name for the mailbox",
             lastName: "Last name for the mailbox",
             username: "Username for the mailbox",
@@ -1560,12 +2000,12 @@ const API_ENDPOINT_SYSTEM = {
 
       // Additional mailbox endpoints from official documentation
       getMailboxDetails: {
-        path: "/v2/mailboxes/{mailboxId}",
+        path: "/v3/mailboxes",
         method: "GET",
         description: "Get detailed information about a specific mailbox",
         parameters: {
-          path: {
-            mailboxId: "ID of the mailbox to get details for (required)",
+          query: {
+            id: "ID of the mailbox to get details for (required, pass as query param)",
           },
         },
         response: {
@@ -1594,12 +2034,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeMailboxesOnRenewal: {
-        path: "/v2/mailboxes/{mailboxId}/remove-on-renewal",
+        path: "/v3/mailboxes/scheduled-removal",
         method: "PUT",
         description: "Mark mailboxes for removal on next renewal period",
         parameters: {
-          path: {
-            mailboxId: "ID of the mailbox to mark for removal (required)",
+          body: {
+            mailboxId: "ID of the mailbox to mark for removal (required, pass in body)",
           },
         },
         response: {
@@ -1624,13 +2064,13 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       getAuthenticatorCode: {
-        path: "/v2/mailboxes/{mailboxId}/authenticator",
+        path: "/v3/mailboxes/authenticator-code",
         method: "GET",
         description:
           "Get authenticator code for mailbox two-factor authentication",
         parameters: {
-          path: {
-            mailboxId: "ID of the mailbox to get authenticator for (required)",
+          query: {
+            mailboxId: "ID of the mailbox to get authenticator for (required, pass as query param)",
           },
         },
         response: {
@@ -1656,7 +2096,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       removeMailboxesInstantly: {
-        path: "/v2/mailboxes/remove-instantly",
+        path: "/v3/mailboxes/remove-mailboxes-instantly",
         method: "POST",
         description:
           "Remove mailboxes immediately (not recommended for production)",
@@ -1687,6 +2127,94 @@ const API_ENDPOINT_SYSTEM = {
           "Consider scheduled removal instead",
         ],
       },
+
+      provisionMailboxes: {
+        path: "/v3/mailboxes/provision",
+        method: "POST",
+        description: "Provision mailboxes on domains",
+        parameters: {
+          body: {
+            domainId: "Domain ID to provision mailboxes on (required)",
+            count: "Number of mailboxes to provision (required)",
+            mailboxes: "Array of mailbox configuration objects",
+          },
+        },
+        response: { success: "Provisioned mailbox details" },
+        useCases: ["Provision mailboxes on new domains"],
+        bestPractices: ["Verify domain DNS before provisioning"],
+      },
+
+      listMailboxesBySubscription: {
+        path: "/v3/mailboxes/list",
+        method: "GET",
+        description: "Get list of mailboxes (alternate list endpoint)",
+        parameters: {
+          query: {
+            subscriptionId: "Filter by subscription ID",
+            status: "Filter by status",
+          },
+        },
+        response: { success: "Array of mailbox objects" },
+        useCases: ["List mailboxes filtered by subscription"],
+        bestPractices: [],
+      },
+
+      customOAuthMailbox: {
+        path: "/v3/mailboxes/custom-oauth",
+        method: "POST",
+        description: "Configure custom OAuth for mailbox",
+        parameters: {
+          body: {
+            mailboxId: "Mailbox ID (required)",
+            oauthConfig: "OAuth configuration object (required)",
+          },
+        },
+        response: { success: "OAuth configuration confirmation" },
+        useCases: ["Set up custom OAuth for mailbox authentication"],
+        bestPractices: ["Verify OAuth credentials before saving"],
+      },
+
+      scheduleMailboxCreation: {
+        path: "/v3/mailboxes/schedule",
+        method: "POST",
+        description: "Schedule mailbox creation for a future time",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required)",
+            scheduledAt: "ISO datetime for scheduled creation (required)",
+            mailboxes: "Array of mailbox configuration objects (required)",
+          },
+        },
+        response: { success: "Scheduled job confirmation" },
+        useCases: ["Schedule bulk mailbox creation"],
+        bestPractices: ["Ensure sufficient wallet balance at scheduled time"],
+      },
+
+      retryFailedMailboxJobs: {
+        path: "/v3/mailboxes/retry-failed",
+        method: "PUT",
+        description: "Retry failed mailbox creation jobs",
+        parameters: {
+          body: {
+            jobIds: "Array of failed job IDs to retry (optional, retries all if omitted)",
+          },
+        },
+        response: { success: "Retry status for each job" },
+        useCases: ["Recover from failed mailbox creation"],
+        bestPractices: ["Check error logs before retrying"],
+      },
+
+      checkMailboxExistsInZapmail: {
+        path: "/v3/mailboxes/exists-in-zapmail",
+        method: "GET",
+        description: "Check if a mailbox email address already exists in Zapmail",
+        parameters: {
+          query: { email: "Email address to check (required)" },
+        },
+        response: { success: "Boolean indicating if the mailbox exists" },
+        useCases: ["Validate before creating a mailbox", "Avoid duplicate mailboxes"],
+        bestPractices: ["Always check before provisioning to prevent conflicts"],
+      },
     },
     commonScenarios: {
       createMailboxesOnEmptyDomains: {
@@ -1700,10 +2228,10 @@ const API_ENDPOINT_SYSTEM = {
           "4. Verify successful creation",
         ],
         example: {
-          step1: "GET /v2/domains",
+          step1: "GET /v3/domains",
           step2: "Filter domains where mailboxCount === 0",
-          step3: "POST /v2/mailboxes with domainId and count",
-          step4: "GET /v2/mailboxes to verify",
+          step3: "POST /v3/mailboxes with domainId and count",
+          step4: "GET /v3/mailboxes to verify",
         },
       },
 
@@ -1716,9 +2244,9 @@ const API_ENDPOINT_SYSTEM = {
           "3. Verify updates were applied correctly",
         ],
         example: {
-          step1: "GET /v2/mailboxes",
-          step2: "PUT /v2/mailboxes/{id} for each mailbox",
-          step3: "GET /v2/mailboxes to verify changes",
+          step1: "GET /v3/mailboxes",
+          step2: "PUT /v3/mailboxes for each mailbox",
+          step3: "GET /v3/mailboxes to verify changes",
         },
       },
     },
@@ -1730,7 +2258,7 @@ const API_ENDPOINT_SYSTEM = {
     description: "Manage wallet balance, transactions, and payments",
     endpoints: {
       getBalance: {
-        path: "/v2/wallet/balance",
+        path: "/v3/wallet/balance",
         method: "GET",
         description: "Get current wallet balance and transaction history",
         parameters: {},
@@ -1763,7 +2291,7 @@ const API_ENDPOINT_SYSTEM = {
 
       // Additional wallet endpoints from official documentation
       addBalanceToWallet: {
-        path: "/v2/wallet/add-balance",
+        path: "/v3/wallet/balance",
         method: "POST",
         description: "Add balance to wallet using payment method",
         parameters: {
@@ -1796,7 +2324,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       enableAutoRecharge: {
-        path: "/v2/wallet/auto-recharge",
+        path: "/v3/wallet/enable-auto-recharge",
         method: "POST",
         description: "Enable automatic wallet recharge when balance is low",
         parameters: {
@@ -1828,6 +2356,34 @@ const API_ENDPOINT_SYSTEM = {
           "Monitor auto recharge activity",
         ],
       },
+
+      getLatestInvoice: {
+        path: "/v3/wallet/invoices",
+        method: "POST",
+        description: "Get latest invoice for wallet transactions",
+        parameters: {
+          body: {
+            limit: "Number of invoices to return (optional)",
+          },
+        },
+        response: { success: "Invoice details" },
+        useCases: ["Download or view latest invoice"],
+        bestPractices: ["Keep invoices for accounting purposes"],
+      },
+
+      buyAddonMailboxes: {
+        path: "/v3/wallet/buy-addon-mailboxes",
+        method: "POST",
+        description: "Purchase addon mailbox seats using wallet",
+        parameters: {
+          body: {
+            count: "Number of addon mailbox seats to purchase (required)",
+          },
+        },
+        response: { success: "Purchase confirmation" },
+        useCases: ["Expand mailbox capacity beyond base plan"],
+        bestPractices: ["Check wallet balance before purchasing"],
+      },
     },
     commonScenarios: {
       checkBalanceBeforePurchase: {
@@ -1840,10 +2396,10 @@ const API_ENDPOINT_SYSTEM = {
           "4. Add funds if balance is insufficient",
         ],
         example: {
-          step1: "GET /v2/wallet/balance",
+          step1: "GET /v3/wallet/balance",
           step2: "Calculate total cost",
-          step3: "POST /v2/domains/buy (if sufficient balance)",
-          step4: "POST /v2/wallet/add-balance (if insufficient)",
+          step3: "POST /v3/domains/buy (if sufficient balance)",
+          step4: "POST /v3/wallet/balance (if insufficient)",
         },
       },
 
@@ -1858,8 +2414,8 @@ const API_ENDPOINT_SYSTEM = {
           "4. Monitor recharge activity",
         ],
         example: {
-          step1: "GET /v2/wallet/balance",
-          step2: "POST /v2/wallet/auto-recharge",
+          step1: "GET /v3/wallet/balance",
+          step2: "POST /v3/wallet/enable-auto-recharge",
           step3: "Test with small threshold",
           step4: "Monitor auto recharge logs",
         },
@@ -1873,7 +2429,7 @@ const API_ENDPOINT_SYSTEM = {
     description: "Export mailboxes to third-party platforms or as files",
     endpoints: {
       addThirdPartyAccount: {
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         description: "Add third-party platform credentials for export",
         parameters: {
@@ -1904,7 +2460,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       exportMailboxes: {
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         description: "Export mailboxes to connected platforms or as files",
         parameters: {
@@ -1936,6 +2492,60 @@ const API_ENDPOINT_SYSTEM = {
           "Verify successful import in target platform",
         ],
       },
+
+      addGoogleClientIdExport: {
+        path: "/v3/exports/add-google-client-id",
+        method: "POST",
+        description: "Add Google client ID via exports (for OAuth-based export)",
+        parameters: {
+          body: {
+            clientId: "Google OAuth Client ID (required)",
+            clientSecret: "Google OAuth Client Secret (required)",
+          },
+        },
+        response: { success: "Client ID addition confirmation" },
+        useCases: ["Configure Google OAuth for export"],
+        bestPractices: ["Verify credentials before saving"],
+      },
+
+      getExportStatus: {
+        path: "/v3/exports/status",
+        method: "GET",
+        description: "Get the status of an ongoing or recent export",
+        parameters: {
+          query: { exportId: "Export job ID (optional)" },
+        },
+        response: { success: "Export status and progress details" },
+        useCases: ["Monitor export progress", "Check if export is complete"],
+        bestPractices: ["Poll periodically for large exports"],
+      },
+
+      fetchWorkspacesForExport: {
+        path: "/v3/exports/fetch-workspaces",
+        method: "GET",
+        description: "Fetch workspaces available for export",
+        parameters: {},
+        response: { success: "Array of workspaces available for export" },
+        useCases: ["Determine target workspaces for export"],
+        bestPractices: [],
+      },
+
+      updateThirdPartyAccount: {
+        path: "/v3/exports/accounts/third-party",
+        method: "PUT",
+        description: "Update existing third-party platform credentials",
+        parameters: {
+          body: {
+            accountId: "Third-party account ID to update (required)",
+            email: "Updated account email (optional)",
+            password: "Updated account password (optional)",
+            app: "Platform name (optional)",
+          },
+        },
+        response: { success: "Updated third-party account confirmation" },
+        useCases: ["Refresh expired credentials", "Update platform connection"],
+        bestPractices: ["Test connection after updating credentials"],
+      },
     },
   },
 
@@ -1946,7 +2556,7 @@ const API_ENDPOINT_SYSTEM = {
       "Manage billing details, payment methods, and account billing information",
     endpoints: {
       addBillingDetails: {
-        path: "/v2/billing",
+        path: "/v3/billing",
         method: "POST",
         description: "Add or update billing details for the account",
         parameters: {
@@ -1977,7 +2587,7 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       updateBillingDetails: {
-        path: "/v2/billing",
+        path: "/v3/billing",
         method: "PUT",
         description: "Update existing billing details",
         parameters: {
@@ -2009,13 +2619,40 @@ const API_ENDPOINT_SYSTEM = {
     },
   },
 
+  // User Management
+  users: {
+    name: "User Management",
+    description: "Retrieve authenticated user account details",
+    endpoints: {
+      getUserDetails: {
+        path: "/v3/users",
+        method: "GET",
+        description: "Get details of the currently authenticated user",
+        parameters: {},
+        response: {
+          success: "User account details",
+          example: {
+            id: "usr_123",
+            email: "user@example.com",
+            firstName: "John",
+            lastName: "Doe",
+            activePlan: "PRO",
+            walletBalance: 50.0,
+          },
+        },
+        useCases: ["Verify account details", "Check current plan and balance"],
+        bestPractices: ["Cache response to reduce API calls"],
+      },
+    },
+  },
+
   // Subscription Management
   subscriptions: {
     name: "Subscription Management",
     description: "Manage account subscriptions, plans, and billing cycles",
     endpoints: {
       getAllSubscriptions: {
-        path: "/v2/subscriptions",
+        path: "/v3/subscriptions",
         method: "GET",
         description: "Get all active and past subscriptions for the account",
         parameters: {},
@@ -2045,14 +2682,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       cancelSubscription: {
-        path: "/v2/subscriptions/{subscriptionId}/cancel",
+        path: "/v3/subscriptions/cancel",
         method: "POST",
         description: "Cancel an active subscription",
         parameters: {
-          path: {
-            subscriptionId: "ID of the subscription to cancel (required)",
-          },
           body: {
+            subscriptionId: "ID of the subscription to cancel (required, pass in body)",
             cancelAtPeriodEnd:
               "Cancel at end of current period (default: true)",
             reason: "Reason for cancellation",
@@ -2080,14 +2715,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       upgradeSubscription: {
-        path: "/v2/subscriptions/{subscriptionId}/upgrade",
+        path: "/v3/subscriptions/upgrade",
         method: "POST",
         description: "Upgrade existing subscription to higher plan",
         parameters: {
-          path: {
-            subscriptionId: "ID of the subscription to upgrade (required)",
-          },
           body: {
+            subscriptionId: "ID of the subscription to upgrade (required, pass in body)",
             newPlan: "New plan to upgrade to (required)",
             prorate: "Prorate the upgrade cost (default: true)",
           },
@@ -2114,6 +2747,36 @@ const API_ENDPOINT_SYSTEM = {
           "Test new plan functionality",
         ],
       },
+
+      purchaseSubscription: {
+        path: "/v3/subscriptions/purchase",
+        method: "POST",
+        description: "Purchase a new subscription plan",
+        parameters: {
+          body: {
+            planId: "Plan ID to purchase (required)",
+            billingCycle: "Billing cycle: monthly or annual (required)",
+            paymentMethod: "Payment method ID",
+          },
+        },
+        response: { success: "New subscription details" },
+        useCases: ["Start a new subscription"],
+        bestPractices: ["Check wallet balance or payment method before purchasing"],
+      },
+
+      getSubscriptionMailboxes: {
+        path: "/v3/subscriptions/mailboxes",
+        method: "POST",
+        description: "Get mailboxes associated with a subscription",
+        parameters: {
+          body: {
+            subscriptionId: "Subscription ID (required)",
+          },
+        },
+        response: { success: "Array of mailboxes in the subscription" },
+        useCases: ["View mailboxes included in a subscription"],
+        bestPractices: [],
+      },
     },
     commonScenarios: {
       manageSubscription: {
@@ -2126,11 +2789,26 @@ const API_ENDPOINT_SYSTEM = {
           "4. Cancel if service no longer required",
         ],
         example: {
-          step1: "GET /v2/subscriptions",
+          step1: "GET /v3/subscriptions",
           step2: "Evaluate current usage and needs",
-          step3: "POST /v2/subscriptions/{id}/upgrade (if needed)",
-          step4: "POST /v2/subscriptions/{id}/cancel (if needed)",
+          step3: "POST /v3/subscriptions/upgrade (if needed)",
+          step4: "POST /v3/subscriptions/cancel (if needed)",
         },
+      },
+
+      updateUserDetails: {
+        path: "/v3/subscriptions",
+        method: "PUT",
+        description: "Update authenticated user details (name, etc.)",
+        parameters: {
+          body: {
+            firstName: "First name (optional)",
+            lastName: "Last name (optional)",
+          },
+        },
+        response: { success: "Updated user details confirmation" },
+        useCases: ["Update display name"],
+        bestPractices: ["Only send fields that need updating"],
       },
     },
   },
@@ -2141,12 +2819,12 @@ const API_ENDPOINT_SYSTEM = {
     description: "Manage DNS records, configurations, and domain DNS settings",
     endpoints: {
       getDnsRecords: {
-        path: "/v2/dns/{domainId}/records",
+        path: "/v3/dns",
         method: "GET",
         description: "Get all DNS records for a domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to get DNS records for (required)",
+          query: {
+            domainId: "Domain ID to get DNS records for (required, pass as query param)",
           },
         },
         response: {
@@ -2181,14 +2859,12 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       addDnsRecord: {
-        path: "/v2/dns/{domainId}/records",
+        path: "/v3/dns",
         method: "POST",
         description: "Add new DNS record to domain",
         parameters: {
-          path: {
-            domainId: "Domain ID to add DNS record to (required)",
-          },
           body: {
+            domainId: "Domain ID to add DNS record to (required, pass in body)",
             type: "DNS record type (A, MX, TXT, CNAME, etc.) (required)",
             name: "Record name (required)",
             value: "Record value (required)",
@@ -2219,15 +2895,13 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       updateDnsRecord: {
-        path: "/v2/dns/{domainId}/records/{recordId}",
+        path: "/v3/dns",
         method: "PUT",
         description: "Update existing DNS record",
         parameters: {
-          path: {
-            domainId: "Domain ID (required)",
-            recordId: "DNS record ID to update (required)",
-          },
           body: {
+            domainId: "Domain ID (required, pass in body)",
+            recordId: "DNS record ID to update (required, pass in body)",
             value: "New record value (required)",
             ttl: "New TTL value",
             priority: "New priority for MX records",
@@ -2254,13 +2928,13 @@ const API_ENDPOINT_SYSTEM = {
       },
 
       deleteDnsRecord: {
-        path: "/v2/dns/{domainId}/records/{recordId}",
+        path: "/v3/dns",
         method: "DELETE",
         description: "Delete DNS record from domain",
         parameters: {
-          path: {
-            domainId: "Domain ID (required)",
-            recordId: "DNS record ID to delete (required)",
+          body: {
+            domainId: "Domain ID (required, pass in body)",
+            recordId: "DNS record ID to delete (required, pass in body)",
           },
         },
         response: {
@@ -2282,6 +2956,21 @@ const API_ENDPOINT_SYSTEM = {
           "Monitor DNS after deletion",
         ],
       },
+
+      bulkAddDnsRecords: {
+        path: "/v3/dns/bulk",
+        method: "POST",
+        description: "Add multiple DNS records to a domain in a single request",
+        parameters: {
+          body: {
+            domainId: "Domain ID (required, in body)",
+            records: "Array of DNS record objects to add (required)",
+          },
+        },
+        response: { success: "Bulk insertion confirmation with created record IDs" },
+        useCases: ["Set up multiple DNS records at once", "Batch DNS configuration"],
+        bestPractices: ["Validate all records before bulk insert", "Use bulk over individual calls for performance"],
+      },
     },
     commonScenarios: {
       setupEmailAuthentication: {
@@ -2296,10 +2985,10 @@ const API_ENDPOINT_SYSTEM = {
           "5. Verify DNS propagation",
         ],
         example: {
-          step1: "GET /v2/dns/{domainId}/records",
-          step2: "POST /v2/dns/{domainId}/records (SPF)",
-          step3: "POST /v2/dns/{domainId}/records (DKIM)",
-          step4: "POST /v2/dns/{domainId}/records (DMARC)",
+          step1: "GET /v3/dns",
+          step2: "POST /v3/dns (SPF)",
+          step3: "POST /v3/dns (DKIM)",
+          step4: "POST /v3/dns (DMARC)",
           step5: "Verify propagation with DNS tools",
         },
       },
@@ -2444,7 +3133,7 @@ async function loadEndpoints() {
     logger.info("Loading endpoint manifest from docs.zapmail.ai");
 
     const resp = await fetch("https://docs.zapmail.ai/llms.txt", {
-      headers: { "user-agent": "zapmail-mcp-server/2.0" },
+      headers: { "user-agent": "zapmail-mcp-server/3.0" },
       signal: AbortSignal.timeout(CONFIG.timeoutMs),
     });
 
@@ -2513,6 +3202,33 @@ const RESERVED_NAMES = new Set([
   "generate_domains",
   "check_domain_availability_batch",
   "plan_and_execute",
+  "list_webhook_event_types",
+  "create_webhook_endpoint",
+  "list_webhook_endpoints",
+  "get_webhook_endpoint",
+  "update_webhook_endpoint",
+  "delete_webhook_endpoint",
+  "test_webhook_endpoint",
+  "emit_dummy_webhook_event",
+  "list_webhook_deliveries",
+  "resend_webhook_delivery",
+  "get_ai_insight_credits",
+  "get_ai_insight_eligible_mailboxes",
+  "calculate_ai_insight_pricing",
+  "generate_mailbox_analysis",
+  "get_mailbox_analysis",
+  "get_mailbox_analysis_by_id",
+  "share_mailbox_analysis",
+  "get_public_mailbox_analysis",
+  "share_mailbox_analysis_by_email",
+  "purchase_ai_insight_for_mailboxes",
+  "purchase_ai_insight_plan",
+  "upgrade_ai_insight_plan",
+  "get_subscriptions_unified",
+  "purchase_subscription_unified",
+  "upgrade_subscription_unified",
+  "cancel_subscription_unified",
+  "get_subscription_mailboxes",
 ]);
 
 function buildDynamicToolMap() {
@@ -2543,7 +3259,7 @@ function buildHeaders(overrides = {}) {
   const headers = {
     "content-type": "application/json",
     "x-auth-zapmail": apiKey || "",
-    "user-agent": "zapmail-mcp-server/2.0",
+    "user-agent": "zapmail-mcp-server/3.0",
   };
   const ws = overrides.workspaceKey ?? CONTEXT.workspaceKey;
   const sp = (
@@ -2556,6 +3272,15 @@ function buildHeaders(overrides = {}) {
 
 function makeId() {
   return crypto.randomBytes(8).toString("hex");
+}
+
+function buildContextHeaders(input = {}) {
+  const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+  const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+  return {
+    ...(ws ? { "x-workspace-key": ws } : {}),
+    ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+  };
 }
 
 async function apiFetch(
@@ -2746,7 +3471,7 @@ async function apiFetch(
 async function fetchDoc(slug) {
   const url = `https://docs.zapmail.ai/${slug}.md`;
   const resp = await fetch(url, {
-    headers: { "user-agent": "zapmail-mcp-server/2.0" },
+    headers: { "user-agent": "zapmail-mcp-server/3.0" },
   });
   if (!resp.ok)
     throw new Error(
@@ -2820,7 +3545,7 @@ async function invokeSlug({
 // ---------------------------------------------------------------------------
 
 async function getWalletBalance() {
-  const data = await apiFetch("/v2/wallet/balance", { method: "GET" });
+  const data = await apiFetch("/v3/wallet/balance", { method: "GET" });
   const balance =
     typeof data?.walletBalance === "number"
       ? data.walletBalance
@@ -2833,7 +3558,7 @@ async function getWalletBalance() {
 }
 
 async function listWorkspaces() {
-  return await apiFetch("/v2/workspaces", { method: "GET" });
+  return await apiFetch("/v3/workspaces", { method: "GET" });
 }
 
 async function listDomains({ contains, workspaceKey, serviceProvider } = {}) {
@@ -2844,7 +3569,7 @@ async function listDomains({ contains, workspaceKey, serviceProvider } = {}) {
     ...(ws ? { "x-workspace-key": ws } : {}),
     ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
   };
-  return await apiFetch("/v2/domains", {
+  return await apiFetch("/v3/domains", {
     method: "GET",
     query: contains ? { contains } : undefined,
     headers,
@@ -2868,7 +3593,7 @@ async function checkDomainAvailabilitySingle(
   return await invokeSlug({
     slug: "get-available-domains-for-registration-13521189e0",
     method: "POST",
-    path: "/v2/domains/available",
+    path: "/v3/domains/available",
     body: { domainName, years },
     headers,
   });
@@ -2942,7 +3667,7 @@ async function purchaseDomains({
   const result = await invokeSlug({
     slug: "get-domains-purchase-payment-link-13521209e0",
     method: "POST",
-    path: "/v2/domains/buy",
+    path: "/v3/domains/buy",
     body: payload,
     headers,
   });
@@ -2995,7 +3720,7 @@ async function createMailboxesForZeroDomains({
     const res = await invokeSlug({
       slug: "assign-new-mailboxes-to-domains-13490321e0",
       method: "POST",
-      path: "/v2/mailboxes",
+      path: "/v3/mailboxes",
       body: payload,
       headers,
     });
@@ -3333,7 +4058,7 @@ async function planFromRules(nl, options = {}) {
       steps.push({
         action: "api",
         slug: null,
-        path: "/v2/workspaces",
+        path: "/v3/workspaces",
         method: "GET",
         description: "List all workspaces",
       });
@@ -3342,7 +4067,7 @@ async function planFromRules(nl, options = {}) {
       steps.push({
         action: "api",
         slug: null,
-        path: "/v2/domains",
+        path: "/v3/domains",
         method: "GET",
         description: "List domains in current workspace",
       });
@@ -3357,7 +4082,7 @@ async function planFromRules(nl, options = {}) {
         steps.push({
           action: "api",
           slug: "get-available-domains-for-registration-13521189e0",
-          path: "/v2/domains/available",
+          path: "/v3/domains/available",
           method: "POST",
           body: { domainName: d, years: simpleParseYears(q) },
           description: `Check availability for ${d}`,
@@ -3370,7 +4095,7 @@ async function planFromRules(nl, options = {}) {
       const years = simpleParseYears(q);
       steps.push({
         action: "api",
-        path: "/v2/wallet/balance",
+        path: "/v3/wallet/balance",
         method: "GET",
         description: "Get wallet balance",
       });
@@ -3380,7 +4105,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/domains/buy",
+        path: "/v3/domains/buy",
         method: "POST",
         bodyFrom: "purchaseDomains",
         years,
@@ -3393,7 +4118,7 @@ async function planFromRules(nl, options = {}) {
       const count = simpleParseMailboxCount(q);
       steps.push({
         action: "api",
-        path: "/v2/domains",
+        path: "/v3/domains",
         method: "GET",
         description: "List domains",
       });
@@ -3403,7 +4128,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/mailboxes",
+        path: "/v3/mailboxes",
         method: "POST",
         bodyFrom: "createMailboxesForZeroDomains",
         count,
@@ -3418,7 +4143,7 @@ async function planFromRules(nl, options = {}) {
       else if (/reply\.?io/i.test(q)) app = "REPLY_IO";
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "placeholder@example.com",
@@ -3438,7 +4163,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "REQUIRED",
@@ -3449,7 +4174,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["REACHINBOX"], status: "ACTIVE" },
         description: "Export all active mailboxes to Reachinbox",
@@ -3464,7 +4189,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "REQUIRED",
@@ -3475,7 +4200,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["INSTANTLY"], status: "ACTIVE" },
         description: "Export all active mailboxes to Instantly",
@@ -3490,7 +4215,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "REQUIRED",
@@ -3501,7 +4226,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["SMARTLEAD"], status: "ACTIVE" },
         description: "Export all active mailboxes to Smartlead",
@@ -3516,7 +4241,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "REQUIRED",
@@ -3527,7 +4252,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["REPLY_IO"], status: "ACTIVE" },
         description: "Export all active mailboxes to Reply.io",
@@ -3542,7 +4267,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["MANUAL"], status: "ACTIVE" },
         description: "Export all active mailboxes as CSV",
@@ -3553,7 +4278,7 @@ async function planFromRules(nl, options = {}) {
     case "EXPORT_CSV": {
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["MANUAL"], status: "ACTIVE" },
         description: "Export all active mailboxes as CSV file",
@@ -3568,7 +4293,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/exports/mailboxes",
+        path: "/v3/exports/mailboxes",
         method: "POST",
         body: { apps: ["MANUAL"], ids: ["REQUIRED_MAILBOX_IDS"] },
         description: "Export specific mailboxes as CSV",
@@ -3583,7 +4308,7 @@ async function planFromRules(nl, options = {}) {
       if (domain) {
         steps.push({
           action: "api",
-          path: "/v2/exports/mailboxes",
+          path: "/v3/exports/mailboxes",
           method: "POST",
           body: { apps: ["MANUAL"], contains: domain, status: "ACTIVE" },
           description: `Export mailboxes from domain ${domain} as CSV`,
@@ -3595,7 +4320,7 @@ async function planFromRules(nl, options = {}) {
         });
         steps.push({
           action: "api",
-          path: "/v2/exports/mailboxes",
+          path: "/v3/exports/mailboxes",
           method: "POST",
           body: { apps: ["MANUAL"], contains: "DOMAIN_NAME", status: "ACTIVE" },
           description: "Export mailboxes from specified domain as CSV",
@@ -3608,7 +4333,7 @@ async function planFromRules(nl, options = {}) {
       const count = simpleParseMailboxCount(q);
       steps.push({
         action: "api",
-        path: "/v2/domains",
+        path: "/v3/domains",
         method: "GET",
         description: "List domains",
       });
@@ -3618,7 +4343,7 @@ async function planFromRules(nl, options = {}) {
       });
       steps.push({
         action: "api",
-        path: "/v2/mailboxes",
+        path: "/v3/mailboxes",
         method: "POST",
         bodyFrom: "createMailboxesForZeroDomains",
         count,
@@ -3630,7 +4355,7 @@ async function planFromRules(nl, options = {}) {
       else if (/reply\.?io/i.test(q)) app = "REPLY_IO";
       steps.push({
         action: "api",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         method: "POST",
         body: {
           email: options?.email || "placeholder@example.com",
@@ -3657,9 +4382,9 @@ async function planFromLLM(nl) {
   const prompt = `You are a planner for the Zapmail API. Given a user instruction, output a JSON plan with steps.
 Each step has: {action: "api"|"compute"|"decision"|"info", method?, path?, slug?, body?, note?, description?}
 Constraints:
-- Prefer wallet-first for purchases; call /v2/wallet/balance before buying.
+- Prefer wallet-first for purchases; call /v3/wallet/balance before buying.
 - Always include x-workspace-key and x-service-provider headers (handled by the executor).
-- Use documented endpoints: list workspaces (/v2/workspaces), list domains (/v2/domains), check availability (POST /v2/domains/available), purchase (/v2/domains/buy), create mailboxes (POST /v2/mailboxes), connect export (/v2/exports/accounts/third-party).
+- Use documented endpoints: list workspaces (/v3/workspaces), list domains (/v3/domains), check availability (POST /v3/domains/available), purchase (/v3/domains/buy), create mailboxes (POST /v3/mailboxes), connect export (/v3/exports/accounts/third-party).
 - If natural language asks for "setup N mailboxes and connect to instantly", plan both mailbox creation then export account connection.
 Return ONLY JSON.
 
@@ -3805,6 +4530,93 @@ function buildToolDefinitions() {
           default: 3,
         },
       },
+    },
+  });
+  tools.push({
+    name: "provision_mailboxes",
+    title: "Provision mailboxes on domains",
+    description:
+      "Provision specific mailboxes (with chosen names/usernames) on one or more domains via POST /v3/mailboxes/provision.",
+    input_schema: {
+      type: "object",
+      properties: {
+        domains: {
+          type: "array",
+          description: "Domains to provision mailboxes on.",
+          items: {
+            type: "object",
+            properties: {
+              domainId: { type: "string", description: "Domain UUID." },
+              domainName: { type: "string", description: "Domain name (e.g. example.co)." },
+              mailboxes: {
+                type: "array",
+                description: "Mailboxes to create on this domain.",
+                items: {
+                  type: "object",
+                  properties: {
+                    firstName: { type: "string" },
+                    lastName: { type: "string" },
+                    mailboxUsername: { type: "string" },
+                  },
+                  required: ["firstName", "lastName", "mailboxUsername"],
+                },
+              },
+            },
+            required: ["domainId", "domainName", "mailboxes"],
+          },
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["domains"],
+    },
+  });
+  tools.push({
+    name: "update_domain_settings",
+    title: "Update domain settings",
+    description:
+      "Update unified domain settings (forwarding, DMARC, email forwarding, catch-all) via PUT /v3/domains/settings.",
+    input_schema: {
+      type: "object",
+      properties: {
+        domainIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Domain UUIDs to apply these settings to.",
+        },
+        forwarding: {
+          type: "object",
+          description: "Domain (web) forwarding config.",
+          properties: {
+            enabled: { type: "boolean" },
+            url: { type: "string", description: "Destination URL to forward the domain to." },
+          },
+        },
+        dmarc: {
+          type: "object",
+          description: "DMARC record config.",
+          additionalProperties: true,
+        },
+        emailForwarding: {
+          type: "object",
+          description: "Email forwarding config (redirects inbox mail to another address).",
+          additionalProperties: true,
+        },
+        catchAll: {
+          type: "object",
+          description: "Catch-all email config.",
+          additionalProperties: true,
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["domainIds"],
+      anyOf: [
+        { required: ["forwarding"] },
+        { required: ["dmarc"] },
+        { required: ["emailForwarding"] },
+        { required: ["catchAll"] },
+      ],
     },
   });
   tools.push({
@@ -4424,6 +5236,470 @@ function buildToolDefinitions() {
       required: ["category", "endpoint"],
     },
   });
+
+  // ---------------------------------------------------------------------
+  // Webhooks (v3/webhooks)
+  // ---------------------------------------------------------------------
+
+  tools.push({
+    name: "list_webhook_event_types",
+    title: "List webhook event types",
+    description:
+      "List all webhook event types that can be subscribed to (domain, mailbox, subscription, export, placement test, and workspace events).",
+    input_schema: { type: "object", properties: {} },
+  });
+
+  tools.push({
+    name: "create_webhook_endpoint",
+    title: "Create webhook endpoint",
+    description: "Register a new webhook endpoint URL subscribed to one or more event types.",
+    input_schema: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "HTTPS URL that will receive webhook deliveries." },
+        enabled_events: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Event types to subscribe to, e.g. domain.status_changed, mailbox.status_changed, subscription.status_changed, subscription.billing_changed, export.started, export.completed, export.failed, export.reconnected, placement_test.status_changed, workspace.status_changed, workspace.invitations.",
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["url", "enabled_events"],
+    },
+  });
+
+  tools.push({
+    name: "list_webhook_endpoints",
+    title: "List webhook endpoints",
+    description: "List all webhook endpoints configured for the active workspace.",
+    input_schema: {
+      type: "object",
+      properties: {
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_webhook_endpoint",
+    title: "Get webhook endpoint",
+    description: "Get details of a single webhook endpoint by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "update_webhook_endpoint",
+    title: "Update webhook endpoint",
+    description: "Update a webhook endpoint's URL, subscribed events, or status.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        url: { type: "string", description: "New HTTPS URL." },
+        enabled_events: { type: "array", items: { type: "string" }, description: "New set of subscribed event types." },
+        status: { type: "string", enum: ["active", "disabled"], description: "Endpoint status." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "delete_webhook_endpoint",
+    title: "Delete webhook endpoint",
+    description: "Delete a webhook endpoint by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "test_webhook_endpoint",
+    title: "Send test webhook event",
+    description: "Send a test event delivery to a webhook endpoint to verify connectivity.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook endpoint UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "emit_dummy_webhook_event",
+    title: "Emit dummy webhook event",
+    description: "Trigger a dummy webhook event across all matching endpoints, useful for testing integrations end-to-end.",
+    input_schema: {
+      type: "object",
+      properties: {
+        eventType: { type: "string", description: "Event type to emit, e.g. domain.status_changed." },
+        payload: { type: "object", description: "Optional custom payload to include.", additionalProperties: true },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "list_webhook_deliveries",
+    title: "List webhook deliveries",
+    description: "List webhook delivery attempts, optionally filtered by endpoint, status, or event type.",
+    input_schema: {
+      type: "object",
+      properties: {
+        endpoint_id: { type: "string", description: "Filter by webhook endpoint UUID." },
+        status: { type: "string", enum: ["pending", "succeeded", "failed"], description: "Filter by delivery status." },
+        event_type: { type: "string", description: "Filter by event type." },
+        page: { type: "number", description: "Page number." },
+        limit: { type: "number", description: "Page size." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "resend_webhook_delivery",
+    title: "Resend webhook delivery",
+    description: "Retry a previously failed (or any) webhook delivery by ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Webhook delivery UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  // ---------------------------------------------------------------------
+  // AI Insight (v3/ai-insight)
+  // ---------------------------------------------------------------------
+
+  const aiInsightMailboxFilterProps = {
+    mailboxIds: { type: "array", items: { type: "string" }, description: "Specific mailbox UUIDs to target." },
+    tagIds: { type: "array", items: { type: "string" }, description: "Filter mailboxes by tag UUIDs." },
+    contains: { type: "string", description: "Substring filter on mailbox/domain." },
+    status: { type: "string", description: "Filter by mailbox status." },
+    filters: {
+      type: "array",
+      description: "Advanced filters, each with field/operator/values.",
+      items: {
+        type: "object",
+        properties: {
+          field: { type: "string" },
+          operator: { type: "string" },
+          values: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+  };
+
+  tools.push({
+    name: "get_ai_insight_credits",
+    title: "Get AI Insight available credits",
+    description: "Get the number of AI Insight analysis credits available in the active workspace.",
+    input_schema: {
+      type: "object",
+      properties: {
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_ai_insight_eligible_mailboxes",
+    title: "Get mailboxes eligible for AI Insight analysis",
+    description: "List mailboxes eligible for AI Insight analysis, optionally filtered by ID, tag, or advanced filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "calculate_ai_insight_pricing",
+    title: "Calculate AI Insight pricing",
+    description: "Calculate the price of running AI Insight analysis on a given set of mailboxes.",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        billingCycle: { type: "string", enum: ["MONTHLY", "ONE_TIME"], description: "Billing cycle for pricing." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "generate_mailbox_analysis",
+    title: "Generate AI Insight mailbox analysis",
+    description: "Kick off AI Insight analysis generation for the selected mailboxes (deliverability/reputation insights).",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        daysBack: { type: "number", description: "How many days of history to analyze (1-365)." },
+        orderId: { type: "string", description: "Associated order ID, if any." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_mailbox_analysis",
+    title: "List AI Insight mailbox analyses",
+    description: "List generated AI Insight mailbox analyses with pagination and filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        page: { type: "number", description: "Page number." },
+        limit: { type: "number", description: "Page size (max 100)." },
+        status: { type: "string", enum: ["IN_PROGRESS", "FAILED", "SUCCESS"], description: "Filter by analysis status." },
+        mailboxIds: { type: "array", items: { type: "string" }, description: "Filter by mailbox UUIDs." },
+        tagIds: { type: "array", items: { type: "string" }, description: "Filter by tag UUIDs." },
+        contains: { type: "string", description: "Substring filter." },
+        mailboxStatus: { type: "string", description: "Filter by underlying mailbox status." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "get_mailbox_analysis_by_id",
+    title: "Get AI Insight mailbox analysis by ID",
+    description: "Get a single AI Insight mailbox analysis result by its ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "share_mailbox_analysis",
+    title: "Mark AI Insight analysis as shared",
+    description: "Mark a mailbox analysis as shared, enabling its public link.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "get_public_mailbox_analysis",
+    title: "Get public AI Insight analysis",
+    description: "Fetch a shared/public AI Insight mailbox analysis by ID (no ownership check).",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+      },
+      required: ["id"],
+    },
+  });
+
+  tools.push({
+    name: "share_mailbox_analysis_by_email",
+    title: "Share AI Insight analysis by email",
+    description: "Email a shareable link for an AI Insight mailbox analysis to one or more recipients.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Analysis UUID." },
+        emails: { type: "array", items: { type: "string" }, description: "Recipient email addresses." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["id", "emails"],
+    },
+  });
+
+  tools.push({
+    name: "purchase_ai_insight_for_mailboxes",
+    title: "Purchase AI Insight for mailboxes",
+    description: "Purchase one-off AI Insight analysis credits for a specific set of mailboxes (wallet-based).",
+    input_schema: {
+      type: "object",
+      properties: {
+        ...aiInsightMailboxFilterProps,
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "purchase_ai_insight_plan",
+    title: "Purchase AI Insight plan",
+    description: "Purchase a recurring AI Insight subscription plan (starter/growth/pro, monthly or LTD).",
+    input_schema: {
+      type: "object",
+      properties: {
+        planName: { type: "string", description: "Plan name, e.g. starter, growth, pro." },
+        billingCycle: { type: "string", description: "Billing cycle, e.g. monthly, ltd." },
+        useWallet: { type: "boolean", description: "Prefer wallet balance for payment." },
+        successUrl: { type: "string", description: "Redirect URL on successful checkout." },
+        cancelUrl: { type: "string", description: "Redirect URL on cancelled checkout." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["planName", "billingCycle"],
+    },
+  });
+
+  tools.push({
+    name: "upgrade_ai_insight_plan",
+    title: "Upgrade AI Insight plan",
+    description: "Upgrade an existing AI Insight subscription to a higher monthly plan.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "AI Insight subscription ID to upgrade." },
+        newLookupKey: {
+          type: "string",
+          enum: ["AI_INSIGHT_STARTER_MONTHLY", "AI_INSIGHT_GROWTH_MONTHLY", "AI_INSIGHT_PRO_MONTHLY"],
+          description: "Target plan lookup key (monthly only).",
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId", "newLookupKey"],
+    },
+  });
+
+  // ---------------------------------------------------------------------
+  // Unified subscriptions (v3/subscriptions)
+  // ---------------------------------------------------------------------
+
+  tools.push({
+    name: "get_subscriptions_unified",
+    title: "Get subscriptions (unified)",
+    description:
+      "List subscriptions across all types (MAILBOXES, PREWARMED, DNS_SHIELD, PLACEMENT_TEST, AI_INSIGHT) in one unified call, with optional status/name/type filters.",
+    input_schema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["ACTIVE", "CANCELLED", "PAUSED", "PAYMENT_PENDING", "PAST_DUE"], description: "Filter by subscription status." },
+        contains: { type: "string", description: "Substring filter on subscription/plan name." },
+        subscriptionType: {
+          type: "array",
+          items: { type: "string", enum: ["MAILBOXES", "PREWARMED", "DNS_SHIELD", "PLACEMENT_TEST", "AI_INSIGHT"] },
+          description: "Filter by one or more subscription types.",
+        },
+        workspaceId: { type: "string", description: "Filter by a specific workspace UUID." },
+        workspaceKey: { type: "string", description: "Workspace key override (for auth headers)" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+    },
+  });
+
+  tools.push({
+    name: "purchase_subscription_unified",
+    title: "Purchase subscription (unified)",
+    description: "Purchase a Zapmail mailbox subscription plan (mvp/starter, growth, pro) with wallet-first billing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        planName: { type: "string", description: "Plan name, e.g. mvp, starter, growth, pro." },
+        billingCycle: { type: "string", description: "Billing cycle." },
+        serviceProviderPlan: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Mailbox provider for the purchased plan." },
+        rewardfulReferral: { type: "string", description: "Rewardful referral ID." },
+        referralStackReferral: { type: "string", description: "ReferralStack referral ID." },
+        email: { type: "string", description: "Email to associate with the purchase." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override for auth headers" },
+      },
+      required: ["planName", "serviceProviderPlan"],
+    },
+  });
+
+  tools.push({
+    name: "upgrade_subscription_unified",
+    title: "Upgrade subscription (unified)",
+    description: "Upgrade an existing mailbox subscription to a higher plan lookup key.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID to upgrade." },
+        uniquePlanKey: { type: "string", description: "Target plan lookup key, e.g. ZAPMAIL_GROWTH, ZAPMAIL_PRO." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId", "uniquePlanKey"],
+    },
+  });
+
+  tools.push({
+    name: "cancel_subscription_unified",
+    title: "Cancel subscription (unified)",
+    description: "Cancel (or revert cancellation of) a mailbox subscription.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID to cancel." },
+        revertCancellation: { type: "boolean", description: "Set true to undo a pending cancellation instead." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId"],
+    },
+  });
+
+  tools.push({
+    name: "get_subscription_mailboxes",
+    title: "Get mailboxes in a subscription",
+    description: "List the mailboxes that belong to a specific subscription.",
+    input_schema: {
+      type: "object",
+      properties: {
+        subscriptionId: { type: "string", description: "Subscription ID." },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["subscriptionId"],
+    },
+  });
+
   for (const { slug, title, description } of ENDPOINTS) {
     const toolName = slug.replace(/-/g, "_");
     if (RESERVED_NAMES.has(toolName)) continue;
@@ -4587,6 +5863,54 @@ async function handleToolsInvoke(id, params) {
       sendToolResult(out);
       return;
     }
+    if (name === "provision_mailboxes") {
+      const { domains } = input;
+      if (!Array.isArray(domains) || domains.length === 0)
+        throw new Error("'domains' must be a non-empty array");
+      const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+      const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+      const headers = {
+        ...(ws ? { "x-workspace-key": ws } : {}),
+        ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+      };
+      const res = await apiFetch("/v3/mailboxes/provision", {
+        method: "POST",
+        headers,
+        body: { domains },
+        maxRetries: 0,
+      });
+      sendToolResult(res);
+      return;
+    }
+    if (name === "update_domain_settings") {
+      const { domainIds, forwarding, dmarc, emailForwarding, catchAll } = input;
+      if (!Array.isArray(domainIds) || domainIds.length === 0)
+        throw new Error("'domainIds' must be a non-empty array");
+      if (!forwarding && !dmarc && !emailForwarding && !catchAll)
+        throw new Error(
+          "At least one of 'forwarding', 'dmarc', 'emailForwarding', or 'catchAll' must be provided",
+        );
+      const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+      const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+      const headers = {
+        ...(ws ? { "x-workspace-key": ws } : {}),
+        ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+      };
+      const body = {
+        domainIds,
+        ...(forwarding ? { forwarding } : {}),
+        ...(dmarc ? { dmarc } : {}),
+        ...(emailForwarding ? { emailForwarding } : {}),
+        ...(catchAll ? { catchAll } : {}),
+      };
+      const res = await apiFetch("/v3/domains/settings", {
+        method: "PUT",
+        headers,
+        body,
+      });
+      sendToolResult(res);
+      return;
+    }
     if (name === "add_third_party_account") {
       const { email, password, app } = input;
       if (!email || !password || !app)
@@ -4601,7 +5925,7 @@ async function handleToolsInvoke(id, params) {
       const data = await invokeSlug({
         slug: "add-third-party-account-details-13490752e0",
         method: "POST",
-        path: "/v2/exports/accounts/third-party",
+        path: "/v3/exports/accounts/third-party",
         body: { email, password, app },
         headers,
       });
@@ -4823,7 +6147,7 @@ async function handleToolsInvoke(id, params) {
         server: {
           uptime: process.uptime(),
           memory: process.memoryUsage(),
-          version: "2.0-enhanced",
+          version: "3.0-enhanced",
         },
       };
 
@@ -4882,7 +6206,7 @@ async function handleToolsInvoke(id, params) {
 
         if (apiKey) {
           // Test API connectivity
-          const testResponse = await apiFetch("/v2/user", { timeoutMs: 5000 });
+          const testResponse = await apiFetch("/v3/users", { timeoutMs: 5000 });
           health.checks.apiConnectivity = "connected";
           if (detailed) health.checks.apiResponse = testResponse;
         } else {
@@ -4977,7 +6301,7 @@ async function handleToolsInvoke(id, params) {
             ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
           };
 
-          const data = await apiFetch("/v2/mailboxes", {
+          const data = await apiFetch("/v3/mailboxes", {
             method: "PUT",
             body: {
               mailboxData: [
@@ -5039,7 +6363,7 @@ async function handleToolsInvoke(id, params) {
         ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
       };
 
-      const allMailboxes = await apiFetch("/v2/mailboxes/list", { headers });
+      const allMailboxes = await apiFetch("/v3/mailboxes/list", { headers });
 
       if (!allMailboxes.data || !allMailboxes.data.domains) {
         sendToolResult({ mailboxes: [], total: 0 });
@@ -5106,7 +6430,7 @@ async function handleToolsInvoke(id, params) {
       const { includeSecrets = false } = input;
 
       const info = {
-        version: "2.0-enhanced",
+        version: "3.0-enhanced",
         features: {
           llmPlanner: FEATURE_FLAGS.llmPlanner,
           caching: CONFIG.enableCaching,
@@ -5467,6 +6791,390 @@ async function handleToolsInvoke(id, params) {
       } catch (error) {
         sendError(id, -32000, error.message);
       }
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // Webhooks (v3/webhooks)
+    // -----------------------------------------------------------------
+
+    if (name === "list_webhook_event_types") {
+      const data = await apiFetch("/v3/webhooks/events", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "create_webhook_endpoint") {
+      if (typeof input.url !== "string")
+        throw new ValidationError("'url' is required and must be a string", "url", input.url);
+      if (!Array.isArray(input.enabled_events) || input.enabled_events.length === 0)
+        throw new ValidationError(
+          "'enabled_events' must be a non-empty array",
+          "enabled_events",
+          input.enabled_events
+        );
+      const data = await apiFetch("/v3/webhooks/endpoints", {
+        method: "POST",
+        body: { url: input.url, enabled_events: input.enabled_events },
+        headers: buildContextHeaders(input),
+        maxRetries: 0,
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "list_webhook_endpoints") {
+      const data = await apiFetch("/v3/webhooks/endpoints", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "update_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const body = {};
+      if (typeof input.url === "string") body.url = input.url;
+      if (Array.isArray(input.enabled_events)) body.enabled_events = input.enabled_events;
+      if (typeof input.status === "string") body.status = input.status;
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "PATCH",
+        body,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "delete_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}`, {
+        method: "DELETE",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "test_webhook_endpoint") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/endpoints/${encodeURIComponent(input.id)}/test`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "emit_dummy_webhook_event") {
+      const body = {};
+      if (typeof input.eventType === "string") body.eventType = input.eventType;
+      if (input.payload && typeof input.payload === "object") body.payload = input.payload;
+      const data = await apiFetch("/v3/webhooks/emit-dummy", {
+        method: "POST",
+        body,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "list_webhook_deliveries") {
+      const query = {};
+      if (typeof input.endpoint_id === "string") query.endpoint_id = input.endpoint_id;
+      if (typeof input.status === "string") query.status = input.status;
+      if (typeof input.event_type === "string") query.event_type = input.event_type;
+      if (input.page !== undefined) query.page = input.page;
+      if (input.limit !== undefined) query.limit = input.limit;
+      const data = await apiFetch("/v3/webhooks/deliveries", {
+        method: "GET",
+        query,
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "resend_webhook_delivery") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/webhooks/deliveries/${encodeURIComponent(input.id)}/resend`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // AI Insight (v3/ai-insight)
+    // -----------------------------------------------------------------
+
+    if (name === "get_ai_insight_credits") {
+      const data = await apiFetch("/v3/ai-insight/available-credits", {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_ai_insight_eligible_mailboxes") {
+      const { mailboxIds, tagIds, contains, filters } = input;
+      const data = await apiFetch("/v3/ai-insight/eligible-mailboxes", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, filters },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "calculate_ai_insight_pricing") {
+      const { mailboxIds, tagIds, contains, filters, billingCycle } = input;
+      const data = await apiFetch("/v3/ai-insight/calculate-pricing", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, filters, billingCycle },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "generate_mailbox_analysis") {
+      const { mailboxIds, tagIds, contains, status, filters, daysBack, orderId } = input;
+      const data = await apiFetch("/v3/ai-insight/generate-mailbox-analysis", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, status, filters, daysBack, orderId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_mailbox_analysis") {
+      const { page, limit, status, mailboxIds, tagIds, contains, mailboxStatus } = input;
+      const data = await apiFetch("/v3/ai-insight/mailbox-analysis", {
+        method: "POST",
+        body: { page, limit, status, mailboxIds, tagIds, contains, mailboxStatus },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_mailbox_analysis_by_id") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}`, {
+        method: "GET",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "share_mailbox_analysis") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/share`, {
+        method: "POST",
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_public_mailbox_analysis") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/public`, {
+        method: "GET",
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "share_mailbox_analysis_by_email") {
+      if (typeof input.id !== "string")
+        throw new ValidationError("'id' is required and must be a string", "id", input.id);
+      if (!Array.isArray(input.emails) || input.emails.length === 0)
+        throw new ValidationError("'emails' must be a non-empty array", "emails", input.emails);
+      const data = await apiFetch(`/v3/ai-insight/mailbox-analysis/${encodeURIComponent(input.id)}/share-email`, {
+        method: "POST",
+        body: { emails: input.emails },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_ai_insight_for_mailboxes") {
+      const { mailboxIds, tagIds, contains, status, filters } = input;
+      const data = await apiFetch("/v3/ai-insight/purchase-mailboxes", {
+        method: "POST",
+        body: { mailboxIds, tagIds, contains, status, filters },
+        headers: buildContextHeaders(input),
+        maxRetries: 0,
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_ai_insight_plan") {
+      if (typeof input.planName !== "string")
+        throw new ValidationError("'planName' is required and must be a string", "planName", input.planName);
+      if (typeof input.billingCycle !== "string")
+        throw new ValidationError("'billingCycle' is required and must be a string", "billingCycle", input.billingCycle);
+      const data = await apiFetch("/v3/ai-insight/purchase-plan", {
+        method: "POST",
+        body: {
+          planName: input.planName,
+          billingCycle: input.billingCycle,
+          useWallet: input.useWallet,
+          successUrl: input.successUrl,
+          cancelUrl: input.cancelUrl,
+        },
+        headers: buildContextHeaders(input),
+        maxRetries: 0,
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "upgrade_ai_insight_plan") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      if (typeof input.newLookupKey !== "string")
+        throw new ValidationError(
+          "'newLookupKey' is required and must be a string",
+          "newLookupKey",
+          input.newLookupKey
+        );
+      const data = await apiFetch("/v3/ai-insight/upgrade-plan", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, newLookupKey: input.newLookupKey },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    // -----------------------------------------------------------------
+    // Unified subscriptions (v3/subscriptions)
+    // -----------------------------------------------------------------
+
+    if (name === "get_subscriptions_unified") {
+      const { status, contains, subscriptionType, workspaceId } = input;
+      const data = await apiFetch("/v3/subscriptions", {
+        method: "POST",
+        body: { status, contains, subscriptionType, workspaceId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "purchase_subscription_unified") {
+      if (typeof input.planName !== "string")
+        throw new ValidationError("'planName' is required and must be a string", "planName", input.planName);
+      if (typeof input.serviceProviderPlan !== "string")
+        throw new ValidationError(
+          "'serviceProviderPlan' is required and must be a string",
+          "serviceProviderPlan",
+          input.serviceProviderPlan
+        );
+      const query = {
+        planName: input.planName,
+        serviceProvider: input.serviceProviderPlan,
+      };
+      if (input.billingCycle) query.billingCycle = input.billingCycle;
+      if (input.rewardfulReferral) query.rewardfulReferral = input.rewardfulReferral;
+      if (input.referralStackReferral) query.referralStackReferral = input.referralStackReferral;
+      if (input.email) query.email = input.email;
+      const data = await apiFetch("/v3/subscriptions/purchase", {
+        method: "POST",
+        query,
+        headers: buildContextHeaders(input),
+        maxRetries: 0,
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "upgrade_subscription_unified") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      if (typeof input.uniquePlanKey !== "string")
+        throw new ValidationError(
+          "'uniquePlanKey' is required and must be a string",
+          "uniquePlanKey",
+          input.uniquePlanKey
+        );
+      const data = await apiFetch("/v3/subscriptions/upgrade", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, uniquePlanKey: input.uniquePlanKey },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "cancel_subscription_unified") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      const data = await apiFetch("/v3/subscriptions/cancel", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId, revertCancellation: input.revertCancellation },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
+      return;
+    }
+
+    if (name === "get_subscription_mailboxes") {
+      if (typeof input.subscriptionId !== "string")
+        throw new ValidationError(
+          "'subscriptionId' is required and must be a string",
+          "subscriptionId",
+          input.subscriptionId
+        );
+      const data = await apiFetch("/v3/subscriptions/mailboxes", {
+        method: "POST",
+        body: { subscriptionId: input.subscriptionId },
+        headers: buildContextHeaders(input),
+      });
+      sendToolResult(data);
       return;
     }
 

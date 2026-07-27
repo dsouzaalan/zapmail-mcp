@@ -5,6 +5,13 @@ All notable changes to the Zapmail MCP Server project will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-22
+
+### 🚀 Added
+- **Webhooks tools**: `list_webhook_event_types`, `create_webhook_endpoint`, `list_webhook_endpoints`, `get_webhook_endpoint`, `update_webhook_endpoint`, `delete_webhook_endpoint`, `test_webhook_endpoint`, `emit_dummy_webhook_event`, `list_webhook_deliveries`, `resend_webhook_delivery` — full coverage of the v3 `/webhooks` API.
+- **AI Insight tools**: `get_ai_insight_credits`, `get_ai_insight_eligible_mailboxes`, `calculate_ai_insight_pricing`, `generate_mailbox_analysis`, `get_mailbox_analysis`, `get_mailbox_analysis_by_id`, `share_mailbox_analysis`, `get_public_mailbox_analysis`, `share_mailbox_analysis_by_email`, `purchase_ai_insight_for_mailboxes`, `purchase_ai_insight_plan`, `upgrade_ai_insight_plan` — full coverage of the v3 `/ai-insight` API.
+- **Unified subscriptions tools**: `get_subscriptions_unified`, `purchase_subscription_unified`, `upgrade_subscription_unified`, `cancel_subscription_unified`, `get_subscription_mailboxes` — covers the v3 `/subscriptions` unified endpoint across MAILBOXES, PREWARMED, DNS_SHIELD, PLACEMENT_TEST, and AI_INSIGHT subscription types.
+
 ## [2.1.0] - 2024-09-04
 
 ### 🚀 Added

@@ -78,6 +78,9 @@ cache/
 # PM2 files
 .pm2/
 
+# Local workflow runtime data (webhook logs, purchased domain/mailbox snapshots)
+local-workflow/data/
+
 # Test files
 test/
 tests/
