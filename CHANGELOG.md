@@ -5,7 +5,7 @@ All notable changes to the Zapmail MCP Server project will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2026-07-22
+## [3.0.0] - 2026-07-22
 
 ### 🚀 Added
 - **Webhooks tools**: `list_webhook_event_types`, `create_webhook_endpoint`, `list_webhook_endpoints`, `get_webhook_endpoint`, `update_webhook_endpoint`, `delete_webhook_endpoint`, `test_webhook_endpoint`, `emit_dummy_webhook_event`, `list_webhook_deliveries`, `resend_webhook_delivery` — full coverage of the v3 `/webhooks` API.
