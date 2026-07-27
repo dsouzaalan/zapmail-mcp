@@ -4533,6 +4533,87 @@ function buildToolDefinitions() {
     },
   });
   tools.push({
+    name: "provision_mailboxes",
+    title: "Provision mailboxes on domains",
+    description:
+      "Provision specific mailboxes (with chosen names/usernames) on one or more domains via POST /v3/mailboxes/provision.",
+    input_schema: {
+      type: "object",
+      properties: {
+        domains: {
+          type: "array",
+          description: "Domains to provision mailboxes on.",
+          items: {
+            type: "object",
+            properties: {
+              domainId: { type: "string", description: "Domain UUID." },
+              domainName: { type: "string", description: "Domain name (e.g. example.co)." },
+              mailboxes: {
+                type: "array",
+                description: "Mailboxes to create on this domain.",
+                items: {
+                  type: "object",
+                  properties: {
+                    firstName: { type: "string" },
+                    lastName: { type: "string" },
+                    mailboxUsername: { type: "string" },
+                  },
+                  required: ["firstName", "lastName", "mailboxUsername"],
+                },
+              },
+            },
+            required: ["domainId", "domainName", "mailboxes"],
+          },
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["domains"],
+    },
+  });
+  tools.push({
+    name: "update_domain_settings",
+    title: "Update domain settings",
+    description:
+      "Update unified domain settings (forwarding, DMARC, email forwarding, catch-all) via PUT /v3/domains/settings.",
+    input_schema: {
+      type: "object",
+      properties: {
+        domainIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Domain UUIDs to apply these settings to.",
+        },
+        forwarding: {
+          type: "object",
+          description: "Domain (web) forwarding config.",
+          properties: {
+            enabled: { type: "boolean" },
+            url: { type: "string", description: "Destination URL to forward the domain to." },
+          },
+        },
+        dmarc: {
+          type: "object",
+          description: "DMARC record config.",
+          additionalProperties: true,
+        },
+        emailForwarding: {
+          type: "object",
+          description: "Email forwarding config (redirects inbox mail to another address).",
+          additionalProperties: true,
+        },
+        catchAll: {
+          type: "object",
+          description: "Catch-all email config.",
+          additionalProperties: true,
+        },
+        workspaceKey: { type: "string", description: "Workspace key override" },
+        serviceProvider: { type: "string", enum: ["GOOGLE", "MICROSOFT"], description: "Service provider override" },
+      },
+      required: ["domainIds"],
+    },
+  });
+  tools.push({
     name: "add_third_party_account",
     title: "Add third-party export account",
     description: "Add credentials for a third-party export integration.",
@@ -5774,6 +5855,49 @@ async function handleToolsInvoke(id, params) {
         serviceProvider: input.serviceProvider,
       });
       sendToolResult(out);
+      return;
+    }
+    if (name === "provision_mailboxes") {
+      const { domains } = input;
+      if (!Array.isArray(domains) || domains.length === 0)
+        throw new Error("'domains' must be a non-empty array");
+      const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+      const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+      const headers = {
+        ...(ws ? { "x-workspace-key": ws } : {}),
+        ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+      };
+      const res = await apiFetch("/v3/mailboxes/provision", {
+        method: "POST",
+        headers,
+        body: { domains },
+      });
+      sendToolResult(res);
+      return;
+    }
+    if (name === "update_domain_settings") {
+      const { domainIds, forwarding, dmarc, emailForwarding, catchAll } = input;
+      if (!Array.isArray(domainIds) || domainIds.length === 0)
+        throw new Error("'domainIds' must be a non-empty array");
+      const ws = input.workspaceKey ?? CONTEXT.workspaceKey;
+      const sp = input.serviceProvider ?? CONTEXT.serviceProvider;
+      const headers = {
+        ...(ws ? { "x-workspace-key": ws } : {}),
+        ...(sp ? { "x-service-provider": String(sp).toUpperCase() } : {}),
+      };
+      const body = {
+        domainIds,
+        ...(forwarding ? { forwarding } : {}),
+        ...(dmarc ? { dmarc } : {}),
+        ...(emailForwarding ? { emailForwarding } : {}),
+        ...(catchAll ? { catchAll } : {}),
+      };
+      const res = await apiFetch("/v3/domains/settings", {
+        method: "PUT",
+        headers,
+        body,
+      });
+      sendToolResult(res);
       return;
     }
     if (name === "add_third_party_account") {
